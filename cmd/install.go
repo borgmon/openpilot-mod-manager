@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"github.com/borgmon/openpilot-mod-manager/common"
+	"github.com/borgmon/openpilot-mod-manager/installer"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -25,9 +26,10 @@ omm install /home/usr/my-awesome-mod`,
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		return common.LogIfErr(Installer.Install(args[0], isForce))
+		return common.LogIfErr(installer.GetInstaller().Install(args[0], isForce))
 	},
-	Aliases: []string{"i"},
+	Aliases:      []string{"i"},
+	SilenceUsage: true,
 }
 
 func init() {

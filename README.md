@@ -16,7 +16,7 @@ sh -c "$(curl -fsSL {TBA})"
 Most commands you can get from `omm --help`. Here are some tips
  
 #### Initialize Repo
-This command will prepare the repo for modding and generate an `omm.yml` file, we will talk about it later.
+This command will prepare the repo for modding and generate an `omm.yml` file in `~/.omm`, we will talk about it later.
 ```sh
 omm init
 ```

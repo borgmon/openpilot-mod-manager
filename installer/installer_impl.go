@@ -10,34 +10,36 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/git"
 	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/mod"
+	"github.com/borgmon/openpilot-mod-manager/param"
 	"github.com/borgmon/openpilot-mod-manager/source"
 	"github.com/pkg/errors"
 )
 
-type InstallerImpl struct {
-	ConfigHandler config.ConfigHandler
-}
+type InstallerImpl struct{}
 
-func NewInstaller(ConfigHandler config.ConfigHandler) Installer {
-	return &InstallerImpl{
-		ConfigHandler: ConfigHandler,
+var installerInstance Installer
+
+func GetInstaller() Installer {
+	if installerInstance != nil {
+		return installerInstance
 	}
+	return &InstallerImpl{}
 }
 
 func (installer *InstallerImpl) Apply() error {
-	err := git.GetGitHandler().CheckoutBranch(installer.ConfigHandler.GetPaths().OPPath, installer.ConfigHandler.GetConfig().OPVersion)
+	err := git.GetGitHandler().CheckoutBranch(param.PathStore.OPPath, config.GetConfigHandler().GetConfig().OPVersion)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = git.GetGitHandler().NewBranch(installer.ConfigHandler.GetPaths().OPPath, git.GetGitHandler().GenerateBranchName())
+	err = git.GetGitHandler().NewBranch(param.PathStore.OPPath, git.GetGitHandler().GenerateBranchName())
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = installer.ConfigHandler.ApplyMods()
+	err = config.GetConfigHandler().ApplyMods()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	// err = git.GetGitHandler().CommitBranch(installer.ConfigHandler.GetPaths().OPPath, git.GetGitHandler().GenerateBranchName())
+	// err = git.GetGitHandler().CommitBranch(param.PathStore.OPPath, git.GetGitHandler().GenerateBranchName())
 	// if err != nil {
 	// 	return errors.WithStack(err)
 	// }
@@ -45,15 +47,15 @@ func (installer *InstallerImpl) Apply() error {
 }
 
 func (installer *InstallerImpl) Reset() error {
-	err := git.GetGitHandler().CheckoutBranch(installer.ConfigHandler.GetPaths().OPPath, installer.ConfigHandler.GetConfig().OPVersion)
+	err := git.GetGitHandler().CheckoutBranch(param.PathStore.OPPath, config.GetConfigHandler().GetConfig().OPVersion)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = file.GetFileHandler().RemoveFolder(installer.ConfigHandler.GetPaths().CachePath)
+	err = file.GetFileHandler().RemoveFolder(param.PathStore.OMMPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	_, err = installer.ConfigHandler.CreateConfig()
+	_, err = config.GetConfigHandler().CreateConfig()
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -68,7 +70,7 @@ func (installer *InstallerImpl) DownloadMod(s source.Source, force bool) (*manif
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if mod, _ := installer.ConfigHandler.FindMod(name); mod != nil {
+	if mod, _ := config.GetConfigHandler().FindMod(name); mod != nil {
 		fmt.Println("This Mod is already exist")
 		return nil, nil
 	} else {
@@ -77,11 +79,11 @@ func (installer *InstallerImpl) DownloadMod(s source.Source, force bool) (*manif
 }
 
 func (installer *InstallerImpl) Remove(name string) error {
-	err := installer.ConfigHandler.RemoveMod(name)
+	err := config.GetConfigHandler().RemoveMod(name)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = file.GetFileHandler().RemoveFolder(filepath.Join(installer.ConfigHandler.GetPaths().CachePath, name))
+	err = file.GetFileHandler().RemoveFolder(filepath.Join(param.PathStore.OMMPath, name))
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -97,13 +99,13 @@ func (installer *InstallerImpl) Install(path string, force bool) error {
 	if common.IsUrl(path) {
 		s = &source.GitSource{
 			RemoteUrl:     path,
-			ConfigHandler: installer.ConfigHandler,
+			ConfigHandler: config.GetConfigHandler(),
 		}
 
 	} else {
 		s = &source.LocalSource{
 			LocalPath:     path,
-			ConfigHandler: installer.ConfigHandler,
+			ConfigHandler: config.GetConfigHandler(),
 		}
 	}
 
@@ -115,7 +117,7 @@ func (installer *InstallerImpl) Install(path string, force bool) error {
 		return nil
 	}
 
-	err = installer.ConfigHandler.AddMod(&mod.Mod{
+	err = config.GetConfigHandler().AddMod(&mod.Mod{
 		Name:    man.Name,
 		Version: man.Version,
 	})

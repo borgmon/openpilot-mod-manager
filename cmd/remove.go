@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"github.com/borgmon/openpilot-mod-manager/common"
+	"github.com/borgmon/openpilot-mod-manager/installer"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -20,9 +21,10 @@ var removeCmd = &cobra.Command{
 		if len(args) != 1 {
 			return errors.New("Invalid Args")
 		}
-		return common.LogIfErr(Installer.Remove(args[0]))
+		return common.LogIfErr(installer.GetInstaller().Remove(args[0]))
 	},
-	Aliases: []string{"i"},
+	Aliases:      []string{"i"},
+	SilenceUsage: true,
 }
 
 func init() {

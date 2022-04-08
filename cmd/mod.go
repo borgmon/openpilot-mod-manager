@@ -7,6 +7,7 @@ package cmd
 import (
 	"github.com/borgmon/openpilot-mod-manager/file"
 	"github.com/borgmon/openpilot-mod-manager/manifest"
+	"github.com/borgmon/openpilot-mod-manager/param"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -17,6 +18,7 @@ var modCmd = &cobra.Command{
 	Short: "Tools to develop mods",
 	Example: `omm mod init
 omm mod new`,
+	SilenceUsage: true,
 }
 
 var initCmd = &cobra.Command{
@@ -27,8 +29,9 @@ omm mod init`,
 	Example: "example",
 	PreRun:  func(cmd *cobra.Command, args []string) { populate() },
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return manifest.GetManifestHandler().Init(ConfigHandler.GetPaths().OPPath)
+		return manifest.GetManifestHandler().Init(param.PathStore.OPPath)
 	},
+	SilenceUsage: true,
 }
 
 var newCmd = &cobra.Command{
@@ -44,6 +47,7 @@ omm mod new selfdrive/common/params.cc`,
 		}
 		return file.GetFileHandler().NewFileRecursively(args[0])
 	},
+	SilenceUsage: true,
 }
 
 func init() {

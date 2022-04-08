@@ -17,7 +17,7 @@
             "request": "launch",
             "mode": "auto",
             "program": ".",
-            "args": ["install", "/home/kev/dev/omm-core", "-o", "/home/kev/dev/omm-test", "-f"]
+            "args": ["install", "/home/kev/dev/omm-core", "-o", "/home/kev/dev/omm-test","-v","-f"]
         },
         {
             "name": "Launch remove",
@@ -25,7 +25,7 @@
             "request": "launch",
             "mode": "auto",
             "program": ".",
-            "args": ["remove", "omm-core", "-o /home/kev/dev/omm-test"]
+            "args": ["remove", "omm-core", "-o", "/home/kev/dev/omm-test","-v"]
         },
     ]
 }

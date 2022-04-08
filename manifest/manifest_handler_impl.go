@@ -10,7 +10,12 @@ import (
 
 type ManifestHandlerImpl struct{}
 
+var manifestHandlerInstance ManifestHandler
+
 func GetManifestHandler() ManifestHandler {
+	if manifestHandlerInstance != nil {
+		return manifestHandlerInstance
+	}
 	return &ManifestHandlerImpl{}
 }
 

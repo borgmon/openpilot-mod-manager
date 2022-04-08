@@ -8,22 +8,41 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/injector"
 	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/mod"
+	"github.com/borgmon/openpilot-mod-manager/param"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
 type ConfigHandlerImpl struct {
-	Config   *Config
-	Paths    *Paths
-	Injector injector.Injector
+	Config *Config
 }
 
-func NewConfigHandler(path *Paths, Injector injector.Injector) ConfigHandler {
-	return &ConfigHandlerImpl{
-		Config:   &Config{OPVersion: "master", Mods: []*mod.Mod{}},
-		Paths:    path,
-		Injector: Injector,
+var configHandlerInstance ConfigHandler
+
+func NewConfigHandler(OPVersion string) ConfigHandler {
+	c := &ConfigHandlerImpl{Config: &Config{
+		OPVersion: OPVersion,
+		Mods:      []*mod.Mod{},
+	}}
+	configHandlerInstance = c
+	return c
+}
+
+func LoadConfigHandler() (ConfigHandler, error) {
+	c := &ConfigHandlerImpl{Config: &Config{
+		OPVersion: "",
+		Mods:      []*mod.Mod{},
+	}}
+	_, err := c.LoadConfig()
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
+	configHandlerInstance = c
+	return c, nil
+}
+
+func GetConfigHandler() ConfigHandler {
+	return configHandlerInstance
 }
 
 func (config ConfigHandlerImpl) CreateConfig() (*Config, error) {
@@ -35,7 +54,7 @@ func (config ConfigHandlerImpl) CreateConfig() (*Config, error) {
 }
 
 func (config ConfigHandlerImpl) RemoveConfig() error {
-	return file.GetFileHandler().RemoveFile(config.Paths.ConfigPath)
+	return file.GetFileHandler().RemoveFile(param.PathStore.ConfigPath)
 }
 
 func (config ConfigHandlerImpl) SaveConfig() error {
@@ -43,7 +62,7 @@ func (config ConfigHandlerImpl) SaveConfig() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = file.GetFileHandler().SaveFile(config.Paths.ConfigPath, bytes)
+	err = file.GetFileHandler().SaveFile(param.PathStore.ConfigPath, bytes)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -51,7 +70,7 @@ func (config ConfigHandlerImpl) SaveConfig() error {
 }
 
 func (config ConfigHandlerImpl) LoadConfig() (*Config, error) {
-	bytes, err := file.GetFileHandler().LoadFile(config.Paths.ConfigPath)
+	bytes, err := file.GetFileHandler().LoadFile(param.PathStore.ConfigPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -119,7 +138,7 @@ func (config ConfigHandlerImpl) GetManifests() ([]*manifest.Manifest, error) {
 
 func (config ConfigHandlerImpl) ApplyMods() error {
 	for _, mod := range config.Config.Mods {
-		rootPath := filepath.Join(config.Paths.CachePath, mod.Name)
+		rootPath := filepath.Join(param.PathStore.OMMPath, mod.Name)
 		paths, err := file.GetFileHandler().ListAllFilesRecursively(rootPath)
 		if err != nil {
 			return errors.WithStack(err)
@@ -127,17 +146,17 @@ func (config ConfigHandlerImpl) ApplyMods() error {
 		paths = filterFiles(paths)
 		for _, path := range paths {
 			relativePath := strings.ReplaceAll(path, rootPath, "")
-			absPath := filepath.Join(config.Paths.OPPath, relativePath)
+			absPath := filepath.Join(param.PathStore.OPPath, relativePath)
 			patches, err := file.GetFileHandler().ParsePatch(path, absPath)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			for _, p := range patches {
-				config.Injector.Pending(p)
+				injector.GetInjector().Pending(p)
 			}
 		}
 	}
-	config.Injector.Inject()
+	injector.GetInjector().Inject()
 	return nil
 }
 
@@ -166,7 +185,7 @@ func (config ConfigHandlerImpl) GetManifest(name string) (*manifest.Manifest, er
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	path := filepath.Join(config.Paths.CachePath, mod.Name, manifest.MANIFEST_FILE_NAME)
+	path := filepath.Join(param.PathStore.OMMPath, mod.Name, manifest.MANIFEST_FILE_NAME)
 	data, err := file.GetFileHandler().LoadFile(path)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -182,8 +201,4 @@ func (config ConfigHandlerImpl) GetManifest(name string) (*manifest.Manifest, er
 
 func (config ConfigHandlerImpl) GetConfig() *Config {
 	return config.Config
-}
-
-func (config ConfigHandlerImpl) GetPaths() *Paths {
-	return config.Paths
 }

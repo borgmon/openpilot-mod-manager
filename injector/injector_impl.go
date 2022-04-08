@@ -14,7 +14,12 @@ type InjectorImpl struct {
 	Changes map[string]patch.Patch // [filepath#linenum]:patch
 }
 
-func NewInjector() Injector {
+var injectorInstance Injector
+
+func GetInjector() Injector {
+	if injectorInstance != nil {
+		return injectorInstance
+	}
 	return &InjectorImpl{Changes: map[string]patch.Patch{}}
 }
 

@@ -1,29 +1,39 @@
 package git
 
 import (
-	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/borgmon/openpilot-mod-manager/common"
 	"github.com/ldez/go-git-cmd-wrapper/branch"
 	"github.com/ldez/go-git-cmd-wrapper/checkout"
 	"github.com/ldez/go-git-cmd-wrapper/clone"
 	"github.com/ldez/go-git-cmd-wrapper/commit"
 	"github.com/ldez/go-git-cmd-wrapper/git"
 	"github.com/ldez/go-git-cmd-wrapper/reset"
+	"github.com/ldez/go-git-cmd-wrapper/status"
 	"github.com/pkg/errors"
 )
 
 type GitHandlerImpl struct{}
 
+var gitHandlerInstance GitHandler
+
 func GetGitHandler() GitHandler {
+	if gitHandlerInstance != nil {
+		return gitHandlerInstance
+	}
 	return &GitHandlerImpl{}
 }
 
 func (handler *GitHandlerImpl) Clone(path, url string) error {
-	os.Chdir(path)
+	err := os.Chdir(path)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	out, err := git.Clone(clone.Repository(url), git.Debug)
-	fmt.Println(out)
+	common.LogIfVarbose(out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -31,42 +41,56 @@ func (handler *GitHandlerImpl) Clone(path, url string) error {
 }
 
 func (handler *GitHandlerImpl) GetBranchName(gitPath string) (string, error) {
-	os.Chdir(gitPath)
-	head, err := git.Raw("branch --show-current", git.Debug)
+	err := os.Chdir(gitPath)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
-	return head, nil
+	out, err := git.Status(status.Short, status.Branch, git.Debug)
+	common.LogIfVarbose(out)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	out = strings.Split(out, "\n")[0]
+	return out[3:], nil
 }
 
 func (handler *GitHandlerImpl) NewBranch(gitPath string, name string) error {
-	os.Chdir(gitPath)
-	out, err := git.Checkout(checkout.NewBranch(handler.GenerateBranchName()), git.Debug)
+	err := os.Chdir(gitPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	fmt.Println(out)
+	out, err := git.Checkout(checkout.NewBranch(handler.GenerateBranchName()), git.Debug)
+	common.LogIfVarbose(out)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	return nil
 }
 
 func (handler *GitHandlerImpl) RemoveBranch(gitPath string, name string) error {
-	os.Chdir(gitPath)
-	out, err := git.Branch(branch.DeleteForce, branch.BranchName(handler.GenerateBranchName()), git.Debug)
+	err := os.Chdir(gitPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	fmt.Println(out)
+	out, err := git.Branch(branch.DeleteForce, branch.BranchName(handler.GenerateBranchName()), git.Debug)
+	common.LogIfVarbose(out)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }
 
 func (handler *GitHandlerImpl) CheckoutBranch(gitPath string, name string) error {
-	os.Chdir(gitPath)
-	out, err := git.Checkout(checkout.Branch(name), git.Debug)
+	err := os.Chdir(gitPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	fmt.Println(out)
+	out, err := git.Checkout(checkout.Branch(name), git.Debug)
+	common.LogIfVarbose(out)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	return nil
 }
 
@@ -76,22 +100,28 @@ func (handler *GitHandlerImpl) GenerateBranchName() string {
 }
 
 func (handler *GitHandlerImpl) CommitBranch(gitPath string, name string) error {
-	os.Chdir(gitPath)
-	out, err := git.Commit(commit.Amend, commit.Message(name), commit.AllowEmpty, git.Debug)
+	err := os.Chdir(gitPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	fmt.Println(out)
+	out, err := git.Commit(commit.Amend, commit.Message(name), commit.AllowEmpty, git.Debug)
+	common.LogIfVarbose(out)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	return nil
 
 }
 
 func (handler *GitHandlerImpl) ResetBranch(gitPath string) error {
-	os.Chdir(gitPath)
-	out, err := git.Reset(reset.Hard, git.Debug)
+	err := os.Chdir(gitPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	fmt.Println(out)
+	out, err := git.Reset(reset.Hard, git.Debug)
+	common.LogIfVarbose(out)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	return nil
 }

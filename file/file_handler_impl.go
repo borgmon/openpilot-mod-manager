@@ -17,7 +17,12 @@ import (
 
 type FileHandlerImpl struct{}
 
+var fileHandlerInstance FileHandler
+
 func GetFileHandler() FileHandler {
+	if fileHandlerInstance != nil {
+		return fileHandlerInstance
+	}
 	return &FileHandlerImpl{}
 }
 

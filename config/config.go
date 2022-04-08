@@ -7,11 +7,5 @@ type Config struct {
 	Mods      []*mod.Mod `yaml:"mods"`
 }
 
-type Paths struct {
-	ConfigPath string
-	CachePath  string
-	OPPath     string
-}
-
 const CONFIG_FILE_NAME = "omm.yml"
 const CACHEPATH = ".omm"

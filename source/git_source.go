@@ -5,6 +5,7 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/config"
 	"github.com/borgmon/openpilot-mod-manager/git"
 	"github.com/borgmon/openpilot-mod-manager/manifest"
+	"github.com/borgmon/openpilot-mod-manager/param"
 	"github.com/pkg/errors"
 )
 
@@ -14,7 +15,7 @@ type GitSource struct {
 }
 
 func (source *GitSource) DownloadToCache() (*manifest.Manifest, error) {
-	err := git.GetGitHandler().Clone(source.ConfigHandler.GetPaths().CachePath, source.RemoteUrl)
+	err := git.GetGitHandler().Clone(param.PathStore.OMMPath, source.RemoteUrl)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
