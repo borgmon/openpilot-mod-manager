@@ -10,13 +10,11 @@ import (
 
 type GitSource struct {
 	RemoteUrl     string
-	GitHandler    git.GitHandler
 	ConfigHandler config.ConfigHandler
-	CachePath     string
 }
 
 func (source *GitSource) DownloadToCache() (*manifest.Manifest, error) {
-	err := source.GitHandler.Clone(source.RemoteUrl)
+	err := git.GetGitHandler().Clone(source.ConfigHandler.GetPaths().CachePath, source.RemoteUrl)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

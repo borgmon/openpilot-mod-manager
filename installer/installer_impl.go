@@ -16,26 +16,20 @@ import (
 
 type InstallerImpl struct {
 	ConfigHandler config.ConfigHandler
-	GitHandler    git.GitHandler
-	OPPath        string
-	CachePath     string
 }
 
-func NewInstaller(ConfigHandler config.ConfigHandler, GitHandler git.GitHandler, OPPath string, CachePath string) Installer {
+func NewInstaller(ConfigHandler config.ConfigHandler) Installer {
 	return &InstallerImpl{
 		ConfigHandler: ConfigHandler,
-		GitHandler:    GitHandler,
-		OPPath:        OPPath,
-		CachePath:     CachePath,
 	}
 }
 
 func (installer *InstallerImpl) Apply() error {
-	err := installer.GitHandler.CheckoutBranch(installer.OPPath, installer.ConfigHandler.GetConfig().OPVersion)
+	err := git.GetGitHandler().CheckoutBranch(installer.ConfigHandler.GetPaths().OPPath, installer.ConfigHandler.GetConfig().OPVersion)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = installer.GitHandler.NewBranch(installer.OPPath, installer.GitHandler.GenerateBranchName())
+	err = git.GetGitHandler().NewBranch(installer.ConfigHandler.GetPaths().OPPath, git.GetGitHandler().GenerateBranchName())
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -43,7 +37,7 @@ func (installer *InstallerImpl) Apply() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = installer.GitHandler.CommitBranch(installer.OPPath, installer.GitHandler.GenerateBranchName())
+	err = git.GetGitHandler().CommitBranch(installer.ConfigHandler.GetPaths().OPPath, git.GetGitHandler().GenerateBranchName())
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -51,11 +45,11 @@ func (installer *InstallerImpl) Apply() error {
 }
 
 func (installer *InstallerImpl) Reset() error {
-	err := installer.GitHandler.CheckoutBranch(installer.OPPath, installer.ConfigHandler.GetConfig().OPVersion)
+	err := git.GetGitHandler().CheckoutBranch(installer.ConfigHandler.GetPaths().OPPath, installer.ConfigHandler.GetConfig().OPVersion)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = file.GetFileHandler().RemoveFolder(installer.CachePath)
+	err = file.GetFileHandler().RemoveFolder(installer.ConfigHandler.GetPaths().CachePath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -87,7 +81,7 @@ func (installer *InstallerImpl) Remove(name string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = file.GetFileHandler().RemoveFolder(filepath.Join(installer.CachePath, name))
+	err = file.GetFileHandler().RemoveFolder(filepath.Join(installer.ConfigHandler.GetPaths().CachePath, name))
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -102,15 +96,14 @@ func (installer *InstallerImpl) Install(path string, force bool) error {
 	var s source.Source
 	if common.IsUrl(path) {
 		s = &source.GitSource{
-			RemoteUrl:  path,
-			GitHandler: installer.GitHandler,
-			CachePath:  installer.CachePath,
+			RemoteUrl:     path,
+			ConfigHandler: installer.ConfigHandler,
 		}
 
 	} else {
 		s = &source.LocalSource{
-			LocalPath: path,
-			CachePath: installer.CachePath,
+			LocalPath:     path,
+			ConfigHandler: installer.ConfigHandler,
 		}
 	}
 

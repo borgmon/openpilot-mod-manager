@@ -1,7 +1,6 @@
 package manifest
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/borgmon/openpilot-mod-manager/file"
@@ -15,7 +14,7 @@ func GetManifestHandler() ManifestHandler {
 	return &ManifestHandlerImpl{}
 }
 
-func (handler *ManifestHandlerImpl) Init() error {
+func (handler *ManifestHandlerImpl) Init(path string) error {
 	manifest := &Manifest{
 		Name:        "my-mod",
 		DisplayName: "my mod",
@@ -28,9 +27,5 @@ func (handler *ManifestHandlerImpl) Init() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	dir, err := os.Getwd()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return file.GetFileHandler().SaveFile(filepath.Join(dir, MANIFEST_FILE_NAME), data)
+	return file.GetFileHandler().SaveFile(filepath.Join(path, MANIFEST_FILE_NAME), data)
 }

@@ -15,6 +15,7 @@ var removeCmd = &cobra.Command{
 	Use:     "remove [mod name]",
 	Short:   "Remove a mod",
 	Example: `omm remove my-awesome-mod`,
+	PreRun:  func(cmd *cobra.Command, args []string) { populate() },
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			return errors.New("Invalid Args")

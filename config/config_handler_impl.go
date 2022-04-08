@@ -12,23 +12,18 @@ import (
 )
 
 type ConfigHandlerImpl struct {
-	Config     *Config
-	ConfigPath string
-	CachePath  string
-	OPPath     string
+	Config *Config
+	Paths  *Paths
 }
 
-func NewConfigHandler(ConfigPath string, CachePath string, OPPath string) ConfigHandler {
+func NewConfigHandler(path *Paths) ConfigHandler {
 	return &ConfigHandlerImpl{
-		Config:     &Config{OPVersion: "master"},
-		ConfigPath: ConfigPath,
-		CachePath:  CachePath,
-		OPPath:     OPPath,
+		Config: &Config{OPVersion: "master", Mods: []*mod.Mod{}},
+		Paths:  path,
 	}
 }
 
 func (config ConfigHandlerImpl) CreateConfig() (*Config, error) {
-	config.Config = &Config{Mods: []*mod.Mod{}}
 	err := config.SaveConfig()
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -37,7 +32,7 @@ func (config ConfigHandlerImpl) CreateConfig() (*Config, error) {
 }
 
 func (config ConfigHandlerImpl) RemoveConfig() error {
-	return file.GetFileHandler().RemoveFile(config.ConfigPath)
+	return file.GetFileHandler().RemoveFile(config.Paths.ConfigPath)
 }
 
 func (config ConfigHandlerImpl) SaveConfig() error {
@@ -45,7 +40,7 @@ func (config ConfigHandlerImpl) SaveConfig() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = file.GetFileHandler().SaveFile(config.ConfigPath, bytes)
+	err = file.GetFileHandler().SaveFile(config.Paths.ConfigPath, bytes)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -53,7 +48,7 @@ func (config ConfigHandlerImpl) SaveConfig() error {
 }
 
 func (config ConfigHandlerImpl) LoadConfig() (*Config, error) {
-	bytes, err := file.GetFileHandler().LoadFile(config.ConfigPath)
+	bytes, err := file.GetFileHandler().LoadFile(config.Paths.ConfigPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -118,13 +113,13 @@ func (config ConfigHandlerImpl) GetManifests() ([]*manifest.Manifest, error) {
 
 func (config ConfigHandlerImpl) ApplyMods() error {
 	for _, mod := range config.Config.Mods {
-		rootPath := filepath.Join(config.CachePath, mod.Name)
+		rootPath := filepath.Join(config.Paths.CachePath, mod.Name)
 		paths, err := file.GetFileHandler().ListAllFilesRecursively(rootPath)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 		for _, path := range paths {
-			absPath := filepath.Join(config.OPPath, path)
+			absPath := filepath.Join(config.Paths.OPPath, path)
 			patches, err := file.GetFileHandler().ParsePatch(path, absPath)
 			if err != nil {
 				return errors.WithStack(err)
@@ -143,7 +138,7 @@ func (config ConfigHandlerImpl) GetManifest(name string) (*manifest.Manifest, er
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	path := filepath.Join(config.CachePath, mod.Name, manifest.MANIFEST_FILE_NAME)
+	path := filepath.Join(config.Paths.CachePath, mod.Name, manifest.MANIFEST_FILE_NAME)
 	data, err := file.GetFileHandler().LoadFile(path)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -159,4 +154,8 @@ func (config ConfigHandlerImpl) GetManifest(name string) (*manifest.Manifest, er
 
 func (config ConfigHandlerImpl) GetConfig() *Config {
 	return config.Config
+}
+
+func (config ConfigHandlerImpl) GetPaths() *Paths {
+	return config.Paths
 }

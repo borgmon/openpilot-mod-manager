@@ -25,8 +25,9 @@ var initCmd = &cobra.Command{
 	Long: `Example:
 omm mod init`,
 	Example: "example",
+	PreRun:  func(cmd *cobra.Command, args []string) { populate() },
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return manifest.GetManifestHandler().Init()
+		return manifest.GetManifestHandler().Init(ConfigHandler.GetPaths().OPPath)
 	},
 }
 
@@ -36,6 +37,7 @@ var newCmd = &cobra.Command{
 	Long: `Example:
 omm mod new selfdrive/common/params.cc`,
 	Example: "example",
+	PreRun:  func(cmd *cobra.Command, args []string) { populate() },
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			return errors.New("Invalid Args")

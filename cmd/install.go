@@ -16,6 +16,7 @@ var installCmd = &cobra.Command{
 	Short: "Install a mod",
 	Example: `omm install https://github.com/borgmon/omm-no-disengage_on_gas
 omm install /home/usr/my-awesome-mod`,
+	PreRun: func(cmd *cobra.Command, args []string) { populate() },
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			return errors.New("Invalid Args")

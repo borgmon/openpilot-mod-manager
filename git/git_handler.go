@@ -1,7 +1,7 @@
 package git
 
 type GitHandler interface {
-	Clone(url string) error
+	Clone(path, url string) error
 	GetBranchName(gitPath string) (string, error)
 	NewBranch(gitPath string, name string) error
 	RemoveBranch(gitPath string, name string) error

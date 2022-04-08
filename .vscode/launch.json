@@ -17,7 +17,7 @@
             "request": "launch",
             "mode": "auto",
             "program": ".",
-            "args": ["install", "/home/kev/dev/omm-core"]
+            "args": ["install", "/home/kev/dev/omm-core", "-c", "/home/kev/dev/omm-test/omm.yml"]
         },
         {
             "name": "Launch remove",
@@ -25,7 +25,7 @@
             "request": "launch",
             "mode": "auto",
             "program": ".",
-            "args": ["remove", "omm-core"]
+            "args": ["remove", "omm-core", "-c /home/kev/dev/omm-test/omm.yml"]
         },
     ]
 }

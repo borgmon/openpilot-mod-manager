@@ -1,5 +1,5 @@
 package manifest
 
 type ManifestHandler interface {
-	Init() error
+	Init(path string) error
 }

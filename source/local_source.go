@@ -3,6 +3,7 @@ package source
 import (
 	"path/filepath"
 
+	"github.com/borgmon/openpilot-mod-manager/config"
 	"github.com/borgmon/openpilot-mod-manager/file"
 	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/pkg/errors"
@@ -10,8 +11,8 @@ import (
 )
 
 type LocalSource struct {
-	LocalPath string
-	CachePath string
+	LocalPath     string
+	ConfigHandler config.ConfigHandler
 }
 
 func (source *LocalSource) DownloadToCache() (*manifest.Manifest, error) {
@@ -19,7 +20,7 @@ func (source *LocalSource) DownloadToCache() (*manifest.Manifest, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	err = file.GetFileHandler().CopyFolderRecursively(source.LocalPath, source.CachePath)
+	err = file.GetFileHandler().CopyFolderRecursively(source.LocalPath, source.ConfigHandler.GetPaths().CachePath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
