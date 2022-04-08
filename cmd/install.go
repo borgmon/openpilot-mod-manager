@@ -5,12 +5,6 @@ Copyright © 2022 borgmon
 package cmd
 
 import (
-	"fmt"
-
-	"github.com/borgmon/openpilot-mod-manager/common"
-	"github.com/borgmon/openpilot-mod-manager/manifest"
-	"github.com/borgmon/openpilot-mod-manager/mod"
-	"github.com/borgmon/openpilot-mod-manager/source"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +23,7 @@ omm install /home/usr/my-awesome-mod`,
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		return installMod(args[0], isForce)
+		return LogIfErr(Installer.Install(args[0], isForce))
 	},
 	Aliases: []string{"i"},
 }
@@ -46,51 +40,4 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	installCmd.Flags().BoolP("force", "f", false, "force install a mod")
-}
-
-func downloadMod(s source.Source, force bool) (*manifest.Manifest, error) {
-	if force {
-		return s.DownloadToCache()
-	}
-	name, err := s.GetName()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	if mod, _ := ConfigHandler.FindMod(name); mod != nil {
-		fmt.Println("This Mod already Exist")
-		return nil, nil
-	} else {
-		return s.DownloadToCache()
-	}
-}
-
-func installMod(path string, force bool) error {
-	var s source.Source
-	if common.IsUrl(path) {
-		s = &source.GitSource{
-			RemoteUrl:  path,
-			GitHandler: GitHandler,
-			CachePath:  CachePath,
-		}
-
-	} else {
-		s = &source.LocalSource{
-			LocalPath: path,
-			CachePath: CachePath,
-		}
-	}
-
-	man, err := downloadMod(s, force)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	err = ConfigHandler.AddMod(&mod.Mod{
-		Name:    man.Name,
-		Version: man.Version,
-	})
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
 }

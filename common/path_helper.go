@@ -16,7 +16,7 @@ func GetFileFromFilePath(filePath string) string {
 	return filepath.Base(filePath)
 }
 
-func GetUserNameFromGithub(urlStr string) (string, error) {
+func GetUserFromGithub(urlStr string) (string, error) {
 	parts, err := ParseGithubUrl(urlStr)
 	if err != nil {
 		return "", errors.WithStack(err)
@@ -24,7 +24,7 @@ func GetUserNameFromGithub(urlStr string) (string, error) {
 	return (*parts)[0], nil
 }
 
-func GetProjectFromGithub(urlStr string) (string, error) {
+func GetNameFromGithub(urlStr string) (string, error) {
 	parts, err := ParseGithubUrl(urlStr)
 	if err != nil {
 		return "", errors.WithStack(err)
@@ -45,6 +45,5 @@ func ParseGithubUrl(urlStr string) (*[]string, error) {
 }
 
 func IsUrl(urlStr string) bool {
-	_, err := url.ParseRequestURI(urlStr)
-	return err == nil
+	return strings.Contains(urlStr, "http")
 }

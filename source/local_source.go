@@ -19,7 +19,7 @@ func (source *LocalSource) DownloadToCache() (*manifest.Manifest, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	err = file.GetFileHandler().MoveFolderRecursively(source.LocalPath, filepath.Join(source.CachePath, man.Name))
+	err = file.GetFileHandler().CopyFolderRecursively(source.LocalPath, source.CachePath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -27,7 +27,7 @@ func (source *LocalSource) DownloadToCache() (*manifest.Manifest, error) {
 }
 
 func (source *LocalSource) getManifest() (*manifest.Manifest, error) {
-	data, err := file.GetFileHandler().LoadFile(source.LocalPath)
+	data, err := file.GetFileHandler().LoadFile(filepath.Join(source.LocalPath, manifest.MANIFEST_FILE_NAME))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

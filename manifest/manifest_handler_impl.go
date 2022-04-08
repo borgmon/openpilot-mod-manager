@@ -9,8 +9,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const MANIFEST_FILE_NAME = "manifest.yml"
-
 type ManifestHandlerImpl struct{}
 
 func GetManifestHandler() ManifestHandler {

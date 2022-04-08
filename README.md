@@ -65,7 +65,7 @@ omm mod init
  
 This will generate your manifest file `manifest.yml`. This file must be placed in root of your folder
 ```yml
-name: my-mod
+name: omm-my-mod # same as github project name
 displayName: my mod
 repoURL: https://github.com/myname/omm-my-mod
 version: v0.8.13-1

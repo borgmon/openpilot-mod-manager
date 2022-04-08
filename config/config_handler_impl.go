@@ -18,8 +18,17 @@ type ConfigHandlerImpl struct {
 	OPPath     string
 }
 
+func NewConfigHandler(ConfigPath string, CachePath string, OPPath string) ConfigHandler {
+	return &ConfigHandlerImpl{
+		Config:     &Config{},
+		ConfigPath: ConfigPath,
+		CachePath:  CachePath,
+		OPPath:     OPPath,
+	}
+}
+
 func (config ConfigHandlerImpl) CreateConfig() error {
-	config.Config.Mods = []*mod.Mod{}
+	config.Config = &Config{Mods: []*mod.Mod{}}
 	err := config.SaveConfig()
 	if err != nil {
 		return errors.WithStack(err)
@@ -32,7 +41,7 @@ func (config ConfigHandlerImpl) RemoveConfig() error {
 }
 
 func (config ConfigHandlerImpl) SaveConfig() error {
-	bytes, err := yaml.Marshal(config)
+	bytes, err := yaml.Marshal(config.Config)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -98,16 +107,11 @@ func (config ConfigHandlerImpl) SortMod() error {
 func (config ConfigHandlerImpl) GetManifests() ([]*manifest.Manifest, error) {
 	result := []*manifest.Manifest{}
 	for _, mod := range config.Config.Mods {
-		data, err := file.GetFileHandler().LoadFile(filepath.Join(config.CachePath, mod.Name, manifest.MANIFEST_FILE_NAME))
+		man, err := config.GetManifest(mod.Name)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		manifestFile := &manifest.Manifest{}
-		err = yaml.Unmarshal(data, manifestFile)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		result = append(result, manifestFile)
+		result = append(result, man)
 	}
 	return result, nil
 }
@@ -133,10 +137,25 @@ func (config ConfigHandlerImpl) ApplyMods() error {
 	return nil
 }
 
-// func (config ConfigHandlerImpl) ListManifests() ([]*manifest.Manifest, error) {
-// 	for _, mod := range config.Config.Mods {
-// 		rootPath := filepath.Join(config.CachePath, mod.Name)
+func (config ConfigHandlerImpl) GetManifest(name string) (*manifest.Manifest, error) {
+	mod, err := config.FindMod(name)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	path := filepath.Join(config.CachePath, mod.Name, manifest.MANIFEST_FILE_NAME)
+	data, err := file.GetFileHandler().LoadFile(path)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	man := &manifest.Manifest{}
+	err = yaml.Unmarshal(data, man)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return man, nil
 
-// 	}
-// 	return nil
-// }
+}
+
+func (config ConfigHandlerImpl) GetConfig() *Config {
+	return config.Config
+}

@@ -17,3 +17,5 @@ func (man *Manifest) ToMod() *mod.Mod {
 		Version: man.Version,
 	}
 }
+
+const MANIFEST_FILE_NAME = "manifest.yml"

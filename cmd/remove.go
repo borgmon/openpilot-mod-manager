@@ -18,11 +18,7 @@ var removeCmd = &cobra.Command{
 		if len(args) != 1 {
 			return errors.New("Invalid Args")
 		}
-		isForce, err := cmd.Flags().GetBool("force")
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		return installMod(args[0], isForce)
+		return LogIfErr(Installer.Remove(args[0]))
 	},
 	Aliases: []string{"i"},
 }
