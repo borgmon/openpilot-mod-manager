@@ -1,0 +1,6 @@
+name: my-mod
+displayName: my mod
+repoUrl: https://github.com/myname/my-mod
+version: v0.8.13-1
+description: This is my mod
+publisher: my name

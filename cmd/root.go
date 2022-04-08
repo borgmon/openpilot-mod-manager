@@ -6,22 +6,18 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
 
+	"github.com/borgmon/openpilot-mod-manager/config"
+	"github.com/borgmon/openpilot-mod-manager/git"
 	"github.com/spf13/cobra"
 )
 
-
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "openpilot-mod-manager",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:   "omm",
+	Short: "Openpilot Mod Manager(OMM)",
+	Long:  `Openpilot Mod Manager is a toolkit for using and developing mods.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -36,16 +32,34 @@ func Execute() {
 	}
 }
 
+var a string
+
+var ConfigHandler config.ConfigHandler
+var GitHandler git.GitHandler
+var ConfigName = "omm.yml"
+var CachePath = "~/.omm"
+var OPPath = "/data/openpilot"
+var ConfigPath = filepath.Join(OPPath, ConfigName)
+
 func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.openpilot-mod-manager.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&ConfigPath, "config", "c", filepath.Join(OPPath, ConfigName), "config file omm.yml")
+	rootCmd.PersistentFlags().StringVarP(&CachePath, "cache", "a", "~/.omm", "cache dir")
+
+	ConfigHandler = &config.ConfigHandlerImpl{
+		ConfigPath: ConfigPath,
+		CachePath:  CachePath,
+		OPPath:     OPPath,
+	}
+
+	GitHandler = &git.GitHandlerImpl{
+		CachePath: CachePath,
+	}
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
-
-

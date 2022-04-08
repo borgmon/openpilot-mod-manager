@@ -10,9 +10,7 @@ import (
 )
 
 type GitHandlerImpl struct {
-	OriginalBranch string
-	CachePath      string
-	CurrentPath    string
+	CachePath string
 }
 
 func (handler *GitHandlerImpl) Clone(url string) error {
@@ -26,8 +24,8 @@ func (handler *GitHandlerImpl) Clone(url string) error {
 	return nil
 }
 
-func (handler *GitHandlerImpl) GetBranch() (string, error) {
-	repo, err := git.PlainOpen(handler.CurrentPath)
+func (handler *GitHandlerImpl) GetBranchName(gitPath string) (string, error) {
+	repo, err := git.PlainOpen(gitPath)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -38,8 +36,8 @@ func (handler *GitHandlerImpl) GetBranch() (string, error) {
 	return head.String(), nil
 }
 
-func (handler *GitHandlerImpl) NewBranch(name string) error {
-	repo, err := git.PlainOpen(handler.CurrentPath)
+func (handler *GitHandlerImpl) NewBranch(gitPath string, name string) error {
+	repo, err := git.PlainOpen(gitPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -50,8 +48,8 @@ func (handler *GitHandlerImpl) NewBranch(name string) error {
 	return nil
 }
 
-func (handler *GitHandlerImpl) RemoveBranch(name string) error {
-	repo, err := git.PlainOpen(handler.CurrentPath)
+func (handler *GitHandlerImpl) RemoveBranch(gitPath string, name string) error {
+	repo, err := git.PlainOpen(gitPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -62,8 +60,8 @@ func (handler *GitHandlerImpl) RemoveBranch(name string) error {
 	return nil
 }
 
-func (handler *GitHandlerImpl) CheckoutBranch(name string) error {
-	repo, err := git.PlainOpen(handler.CurrentPath)
+func (handler *GitHandlerImpl) CheckoutBranch(gitPath string, name string) error {
+	repo, err := git.PlainOpen(gitPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}

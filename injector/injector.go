@@ -1,8 +1,8 @@
 package injector
 
-import "github.com/borgmon/openpilot-mod-manager/mod"
+import "github.com/borgmon/openpilot-mod-manager/patch"
 
 type Injector interface {
-	Pending([]mod.ModManifest) error
-	inject() error
+	Pending(p patch.Patch) error
+	Inject()
 }

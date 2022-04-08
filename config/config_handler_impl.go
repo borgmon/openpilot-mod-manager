@@ -1,20 +1,25 @@
 package config
 
 import (
+	"path/filepath"
+
 	"github.com/borgmon/openpilot-mod-manager/file"
+	"github.com/borgmon/openpilot-mod-manager/injector"
+	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/mod"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
 type ConfigHandlerImpl struct {
-	Config      *Config
-	FileHandler file.FileHandler
-	configName  string
+	Config     *Config
+	ConfigPath string
+	CachePath  string
+	OPPath     string
 }
 
 func (config ConfigHandlerImpl) CreateConfig() error {
-	config.Config.Mods = []*mod.ModManifest{}
+	config.Config.Mods = []*mod.Mod{}
 	err := config.SaveConfig()
 	if err != nil {
 		return errors.WithStack(err)
@@ -23,7 +28,7 @@ func (config ConfigHandlerImpl) CreateConfig() error {
 }
 
 func (config ConfigHandlerImpl) RemoveConfig() error {
-	return config.FileHandler.RemoveFile(config.configName)
+	return file.GetFileHandler().RemoveFile(config.ConfigPath)
 }
 
 func (config ConfigHandlerImpl) SaveConfig() error {
@@ -31,7 +36,7 @@ func (config ConfigHandlerImpl) SaveConfig() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = config.FileHandler.SaveFile(config.configName, bytes)
+	err = file.GetFileHandler().SaveFile(config.ConfigPath, bytes)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -39,7 +44,7 @@ func (config ConfigHandlerImpl) SaveConfig() error {
 }
 
 func (config ConfigHandlerImpl) LoadConfig() (*Config, error) {
-	bytes, err := config.FileHandler.LoadFile(config.configName)
+	bytes, err := file.GetFileHandler().LoadFile(config.ConfigPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -50,7 +55,7 @@ func (config ConfigHandlerImpl) LoadConfig() (*Config, error) {
 	return config.Config, nil
 }
 
-func (config ConfigHandlerImpl) AddMod(mod *mod.ModManifest) error {
+func (config ConfigHandlerImpl) AddMod(mod *mod.Mod) error {
 	config.Config.Mods = append(config.Config.Mods, mod)
 	err := config.SaveConfig()
 	if err != nil {
@@ -60,7 +65,8 @@ func (config ConfigHandlerImpl) AddMod(mod *mod.ModManifest) error {
 }
 
 func (config ConfigHandlerImpl) RemoveMod(name string) error {
-	mods := []*mod.ModManifest{}
+	mods := []*mod.Mod{}
+
 	for _, mod := range config.Config.Mods {
 		if mod.Name != name {
 			mods = append(mods, mod)
@@ -75,16 +81,62 @@ func (config ConfigHandlerImpl) RemoveMod(name string) error {
 	return nil
 }
 
-func (config ConfigHandlerImpl) FindMod(name string) *mod.ModManifest {
+func (config ConfigHandlerImpl) FindMod(name string) (*mod.Mod, error) {
 	for _, mod := range config.Config.Mods {
 		if mod.Name == name {
-			return mod
+			return mod, nil
+		}
+	}
+	return nil, nil
+}
+
+// TODO: dependencies
+func (config ConfigHandlerImpl) SortMod() error {
+	return errors.New("SortMod not implemented")
+}
+
+func (config ConfigHandlerImpl) GetManifests() ([]*manifest.Manifest, error) {
+	result := []*manifest.Manifest{}
+	for _, mod := range config.Config.Mods {
+		data, err := file.GetFileHandler().LoadFile(filepath.Join(config.CachePath, mod.Name, manifest.MANIFEST_FILE_NAME))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		manifestFile := &manifest.Manifest{}
+		err = yaml.Unmarshal(data, manifestFile)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		result = append(result, manifestFile)
+	}
+	return result, nil
+}
+
+func (config ConfigHandlerImpl) ApplyMods() error {
+	for _, mod := range config.Config.Mods {
+		rootPath := filepath.Join(config.CachePath, mod.Name)
+		paths, err := file.GetFileHandler().ListAllFilesRecursively(rootPath)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		for _, path := range paths {
+			absPath := filepath.Join(config.OPPath, path)
+			patches, err := file.GetFileHandler().ParsePatch(path, absPath)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			for _, p := range patches {
+				injector.GetInjector().Pending(p)
+			}
 		}
 	}
 	return nil
 }
 
-// TODO: dependencies
-func (config ConfigHandlerImpl) SortMod() error {
-	return nil
-}
+// func (config ConfigHandlerImpl) ListManifests() ([]*manifest.Manifest, error) {
+// 	for _, mod := range config.Config.Mods {
+// 		rootPath := filepath.Join(config.CachePath, mod.Name)
+
+// 	}
+// 	return nil
+// }
