@@ -27,5 +27,13 @@
             "program": ".",
             "args": ["remove", "omm-core", "-o", "/home/kev/dev/omm-test","-v"]
         },
+        {
+            "name": "Launch reset",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": ".",
+            "args": ["reset", "omm-core", "-o", "/home/kev/dev/omm-test","-v"]
+        },
     ]
 }

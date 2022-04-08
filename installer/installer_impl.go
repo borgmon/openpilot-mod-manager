@@ -3,6 +3,7 @@ package installer
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/borgmon/openpilot-mod-manager/common"
 	"github.com/borgmon/openpilot-mod-manager/config"
@@ -44,7 +45,7 @@ func (installer *InstallerImpl) Apply() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = git.GetGitHandler().CommitBranch(param.PathStore.OPPath, git.GetGitHandler().GenerateBranchName())
+	err = git.GetGitHandler().CommitBranch(param.PathStore.OPPath, config.GetConfigHandler().BuildModList())
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -56,6 +57,10 @@ func (installer *InstallerImpl) Reset() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	err = installer.RemoveAllOMMBranches()
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	err = file.GetFileHandler().RemoveFolder(param.PathStore.OMMPath)
 	if err != nil {
 		return errors.WithStack(err)
@@ -63,6 +68,24 @@ func (installer *InstallerImpl) Reset() error {
 	_, err = config.GetConfigHandler().CreateConfig()
 	if err != nil {
 		return errors.WithStack(err)
+	}
+	return nil
+}
+
+func (installer *InstallerImpl) RemoveAllOMMBranches() error {
+	str, err := git.GetGitHandler().ListBranch(param.PathStore.OPPath)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	branches := strings.Split(str, "\n")
+	for _, b := range branches {
+		if strings.Contains(b, "omm-") {
+			err = git.GetGitHandler().RemoveBranch(param.PathStore.OPPath, b[2:])
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+
 	}
 	return nil
 }

@@ -46,11 +46,12 @@ func GetConfigHandler() ConfigHandler {
 }
 
 func (config ConfigHandlerImpl) CreateConfig() (*Config, error) {
-	err := config.SaveConfig()
+	c := NewConfigHandler(config.Config.OPVersion)
+	err := c.SaveConfig()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return config.Config, nil
+	return c.GetConfig(), nil
 }
 
 func (config ConfigHandlerImpl) RemoveConfig() error {
@@ -202,4 +203,12 @@ func (config ConfigHandlerImpl) GetManifest(name string) (*manifest.Manifest, er
 
 func (config ConfigHandlerImpl) GetConfig() *Config {
 	return config.Config
+}
+
+func (config ConfigHandlerImpl) BuildModList() string {
+	result := []string{}
+	for _, m := range config.Config.Mods {
+		result = append(result, m.Name+":"+m.Version)
+	}
+	return strings.Join(result, "\n")
 }

@@ -18,4 +18,5 @@ type ConfigHandler interface {
 	GetManifest(name string) (*manifest.Manifest, error)
 	GetManifests() ([]*manifest.Manifest, error)
 	GetConfig() *Config
+	BuildModList() string
 }

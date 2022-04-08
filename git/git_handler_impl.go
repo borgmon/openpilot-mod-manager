@@ -74,7 +74,7 @@ func (handler *GitHandlerImpl) RemoveBranch(gitPath string, name string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	out, err := git.Branch(branch.DeleteForce, branch.BranchName(handler.GenerateBranchName()), git.Debug)
+	out, err := git.Branch(branch.DeleteForce, branch.BranchName(name), git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
 		return errors.WithStack(err)
@@ -140,4 +140,17 @@ func (handler *GitHandlerImpl) ResetBranch(gitPath string) error {
 		return errors.WithStack(err)
 	}
 	return nil
+}
+
+func (handler *GitHandlerImpl) ListBranch(gitPath string) (string, error) {
+	err := os.Chdir(gitPath)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	out, err := git.Branch(branch.List, git.Debug)
+	common.LogIfVarbose(out)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	return out, nil
 }
