@@ -152,6 +152,7 @@ func (config ConfigHandlerImpl) ApplyMods() error {
 				return errors.WithStack(err)
 			}
 			for _, p := range patches {
+				p.Mod = mod
 				injector.GetInjector().Pending(p)
 			}
 		}

@@ -23,7 +23,8 @@ func GetInstaller() Installer {
 	if installerInstance != nil {
 		return installerInstance
 	}
-	return &InstallerImpl{}
+	installerInstance = &InstallerImpl{}
+	return installerInstance
 }
 
 func (installer *InstallerImpl) Apply() error {

@@ -11,7 +11,7 @@ type FileHandler interface {
 	AddLine(path string, m map[int]string) error
 	ReplaceLine(path string, m map[int]string) error
 	ListAllFilesRecursively(rootPath string) ([]string, error)
-	ParsePatch(path string, opPath string) ([]patch.Patch, error)
+	ParsePatch(path string, opPath string) ([]*patch.Patch, error)
 	CopyFolderRecursively(move string, to string) error
 	NewFileRecursively(filePath string) error
 	NewFolder(path string) error

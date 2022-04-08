@@ -23,7 +23,8 @@ func GetFileHandler() FileHandler {
 	if fileHandlerInstance != nil {
 		return fileHandlerInstance
 	}
-	return &FileHandlerImpl{}
+	fileHandlerInstance = &FileHandlerImpl{}
+	return fileHandlerInstance
 }
 
 func (handler *FileHandlerImpl) SaveFile(name string, data []byte) error {
@@ -157,7 +158,7 @@ func (handler *FileHandlerImpl) RemoveFolder(path string) error {
 	return os.RemoveAll(path)
 }
 
-func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]patch.Patch, error) {
+func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]*patch.Patch, error) {
 	file, err := os.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -165,7 +166,7 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]patch.
 	defer file.Close()
 	reader := bufio.NewReader(file)
 	i := 1
-	result := []patch.Patch{}
+	result := []*patch.Patch{}
 	operand := ""
 	buf := ""
 	start := 0
@@ -174,7 +175,7 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]patch.
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				result = append(result, &patch.PatchImpl{
+				result = append(result, &patch.Patch{
 					Path:       opPath,
 					LineNumber: start,
 					Data:       buf,
@@ -186,7 +187,7 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]patch.
 		}
 		if op := getOperands(line); op != "" {
 			if buf != "" {
-				result = append(result, &patch.PatchImpl{
+				result = append(result, &patch.Patch{
 					Path:       opPath,
 					LineNumber: start,
 					Data:       buf,

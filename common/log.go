@@ -23,6 +23,6 @@ func LogIfErr(err error) error {
 
 func LogIfVarbose(str string) {
 	if param.ConfigStore.Verbose {
-		fmt.Printf("%+v", str)
+		fmt.Printf("%+v", str+"\n")
 	}
 }

@@ -24,7 +24,8 @@ func GetGitHandler() GitHandler {
 	if gitHandlerInstance != nil {
 		return gitHandlerInstance
 	}
-	return &GitHandlerImpl{}
+	gitHandlerInstance = &GitHandlerImpl{}
+	return gitHandlerInstance
 }
 
 func (handler *GitHandlerImpl) Clone(path, url string) error {

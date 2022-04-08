@@ -16,7 +16,8 @@ func GetManifestHandler() ManifestHandler {
 	if manifestHandlerInstance != nil {
 		return manifestHandlerInstance
 	}
-	return &ManifestHandlerImpl{}
+	manifestHandlerInstance = &ManifestHandlerImpl{}
+	return manifestHandlerInstance
 }
 
 func (handler *ManifestHandlerImpl) Init(path string) error {
