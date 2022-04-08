@@ -35,5 +35,13 @@
             "program": ".",
             "args": ["reset", "omm-core", "-o", "/home/kev/dev/omm-test","-v"]
         },
+        {
+            "name": "Launch list",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": ".",
+            "args": ["list", "omm-core", "-o", "/home/kev/dev/omm-test","-v"]
+        },
     ]
 }

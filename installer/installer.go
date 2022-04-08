@@ -5,4 +5,5 @@ type Installer interface {
 	Apply() error
 	Install(path string, force bool) error
 	Remove(name string) error
+	List() error
 }

@@ -160,3 +160,8 @@ func (installer *InstallerImpl) Install(path string, force bool) error {
 
 	return nil
 }
+
+func (installer *InstallerImpl) List() error {
+	_, err := fmt.Println(config.GetConfigHandler().BuildModList())
+	return err
+}
