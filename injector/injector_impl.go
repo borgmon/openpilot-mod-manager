@@ -13,7 +13,7 @@ type InjectorImpl struct {
 }
 
 func GetInjector() Injector {
-	return &InjectorImpl{}
+	return &InjectorImpl{Changes: map[string]patch.Patch{}}
 }
 
 func (injector *InjectorImpl) Pending(p patch.Patch) error {
@@ -67,11 +67,11 @@ func (injector *InjectorImpl) doInject(path string, appends []patch.Patch, repla
 	}
 	err := file.GetFileHandler().AddLine(path, appendMap)
 	if err != nil {
-		return errors.WithStack(err)
+		return common.LogIfErr(errors.WithStack(err))
 	}
 	err = file.GetFileHandler().ReplaceLine(path, replaceMap)
 	if err != nil {
-		return errors.WithStack(err)
+		return common.LogIfErr(errors.WithStack(err))
 	}
 	return nil
 }

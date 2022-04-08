@@ -50,7 +50,10 @@ func (handler *GitHandlerImpl) NewBranch(gitPath string, name string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = repo.CreateBranch(&config.Branch{Name: name})
+	err = repo.CreateBranch(&config.Branch{
+		Name:  name,
+		Merge: plumbing.NewBranchReferenceName(name),
+	})
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -120,7 +123,7 @@ func (handler *GitHandlerImpl) ResetBranch(gitPath string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = tree.Reset(nil)
+	err = tree.Reset(&git.ResetOptions{})
 	if err != nil {
 		return errors.WithStack(err)
 	}

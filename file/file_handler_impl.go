@@ -92,8 +92,7 @@ func (handler *FileHandlerImpl) ListAllFilesRecursively(rootPath string) ([]stri
 }
 
 func (handler *FileHandlerImpl) CopyFolderRecursively(move string, to string) error {
-	mv := exec.Command("cp", "-R", move, to)
-	err := mv.Run()
+	err := execRunner("cp", "-R", move, to)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -101,8 +100,15 @@ func (handler *FileHandlerImpl) CopyFolderRecursively(move string, to string) er
 }
 
 func (handler *FileHandlerImpl) NewFolder(path string) error {
-	mkdir := exec.Command("mkdir", "-p", path)
-	err := mkdir.Run()
+	err := execRunner("mkdir", "-p", path)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+func (handler *FileHandlerImpl) NewBranch(path string) error {
+	err := execRunner("mkdir", "-p", path)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -112,6 +118,17 @@ func (handler *FileHandlerImpl) NewFolder(path string) error {
 func (handler *FileHandlerImpl) NewFile(path string) error {
 	touch := exec.Command("touch", path)
 	err := touch.Run()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+func execRunner(name string, arg ...string) error {
+	e := exec.Command(name, arg...)
+	b := new(strings.Builder)
+	e.Stdout = b
+	err := e.Run()
 	if err != nil {
 		return errors.WithStack(err)
 	}

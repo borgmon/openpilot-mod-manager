@@ -5,6 +5,7 @@ Copyright © 2022 borgmon
 package cmd
 
 import (
+	"github.com/borgmon/openpilot-mod-manager/common"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +19,7 @@ var removeCmd = &cobra.Command{
 		if len(args) != 1 {
 			return errors.New("Invalid Args")
 		}
-		return LogIfErr(Installer.Remove(args[0]))
+		return common.LogIfErr(Installer.Remove(args[0]))
 	},
 	Aliases: []string{"i"},
 }

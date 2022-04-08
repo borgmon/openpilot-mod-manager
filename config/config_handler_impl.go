@@ -134,6 +134,7 @@ func (config ConfigHandlerImpl) ApplyMods() error {
 			}
 		}
 	}
+	injector.GetInjector().Inject()
 	return nil
 }
 

@@ -122,11 +122,6 @@ func (installer *InstallerImpl) Install(path string, force bool) error {
 		return nil
 	}
 
-	err = installer.Apply()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	err = installer.ConfigHandler.AddMod(&mod.Mod{
 		Name:    man.Name,
 		Version: man.Version,
@@ -134,5 +129,11 @@ func (installer *InstallerImpl) Install(path string, force bool) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	err = installer.Apply()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	return nil
 }
