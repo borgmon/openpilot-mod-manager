@@ -40,10 +40,14 @@ func (installer *InstallerImpl) Apply() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	// err = git.GetGitHandler().CommitBranch(param.PathStore.OPPath, git.GetGitHandler().GenerateBranchName())
-	// if err != nil {
-	// 	return errors.WithStack(err)
-	// }
+	err = git.GetGitHandler().AddBranch(param.PathStore.OPPath)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	err = git.GetGitHandler().CommitBranch(param.PathStore.OPPath, git.GetGitHandler().GenerateBranchName())
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	return nil
 }
 

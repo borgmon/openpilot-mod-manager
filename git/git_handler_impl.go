@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/borgmon/openpilot-mod-manager/common"
+	"github.com/ldez/go-git-cmd-wrapper/add"
 	"github.com/ldez/go-git-cmd-wrapper/branch"
 	"github.com/ldez/go-git-cmd-wrapper/checkout"
 	"github.com/ldez/go-git-cmd-wrapper/clone"
@@ -106,6 +107,20 @@ func (handler *GitHandlerImpl) CommitBranch(gitPath string, name string) error {
 		return errors.WithStack(err)
 	}
 	out, err := git.Commit(commit.Amend, commit.Message(name), commit.AllowEmpty, git.Debug)
+	common.LogIfVarbose(out)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+
+}
+
+func (handler *GitHandlerImpl) AddBranch(gitPath string) error {
+	err := os.Chdir(gitPath)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	out, err := git.Add(add.All, git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
 		return errors.WithStack(err)

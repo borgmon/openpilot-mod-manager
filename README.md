@@ -1,6 +1,15 @@
 # Openpilot Mod Manager
 Openpilot Mod Manager(OMM) is an Openpilot modding tool for both users and developers. It manipulates source code directly as a text file(instead of using language features) in order to customize behaviors.
- 
+
+## Table of contents
+- [Install](#install)
+- [Usage](#usage)
+  - [For users](#for-users)
+  - [For developers](#for-developers)
+- [Q&A](#qa)
+  - [What is `omm-core`?](#what-is-omm-core)
+- [To-Do](#to-do)
+
 ## Install
 Make sure you are on the official fork release branch.
 ```sh
@@ -35,9 +44,14 @@ omm install /home/usr/my-awesome-mod
 ```sh
 omm reset
 ```
-This will uninstall all mods, including
+This will uninstall all mods, including cache
+
+#### More commands
+The usage is build right in the `omm --help`.
+
+You can even do `omm install --help` to get sub command helps
  
-**For list of mods please check WIKI**
+**For list of mods please check WIKI, and welcome to contributing!**
 #### omm.yml
 This is the core of the modding process. You will find one like this:
 ```yml
@@ -55,7 +69,7 @@ omm apply
  
 #### Load order
 Some mods may require higher load order(dependency for other mods). This can be achieved by putting it higher up in the list.
- 
+
 ### For developers
 #### Step 1: Create manifest
 Developing a mod is very easy. Let's start by making a new directory and type
@@ -132,4 +146,4 @@ And you are done! Share your mod url and let people try it out!
 - [ ] use worker pool for injection and mod loading
 - [ ] upgrades
 - [ ] on device options
-
+- [ ] validating mod package

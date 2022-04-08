@@ -53,7 +53,7 @@ func init() {
 
 func populate() {
 	param.NewParam(
-		filepath.Join(OMMPath, config.CONFIG_FILE_NAME),
+		filepath.Join(OPPath, config.CONFIG_FILE_NAME),
 		OMMPath,
 		OPPath,
 		Verbose,

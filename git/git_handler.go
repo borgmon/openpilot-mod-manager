@@ -8,5 +8,6 @@ type GitHandler interface {
 	CheckoutBranch(gitPath string, name string) error
 	GenerateBranchName() string
 	CommitBranch(gitPath string, name string) error
+	AddBranch(gitPath string) error
 	ResetBranch(gitPath string) error
 }
