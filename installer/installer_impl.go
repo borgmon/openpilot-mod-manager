@@ -29,6 +29,7 @@ func GetInstaller() Installer {
 }
 
 func (installer *InstallerImpl) Apply() error {
+
 	err := git.GetGitHandler().CheckoutBranch(param.PathStore.OPPath, config.GetConfigHandler().GetConfig().OPVersion)
 	if err != nil {
 		return errors.WithStack(err)
