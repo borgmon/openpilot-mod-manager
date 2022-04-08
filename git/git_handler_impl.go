@@ -108,7 +108,7 @@ func (handler *GitHandlerImpl) CommitBranch(gitPath string, name string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	_, err = tree.Commit(name, nil)
+	_, err = tree.Commit(name, &git.CommitOptions{})
 	if err != nil {
 		return errors.WithStack(err)
 	}
