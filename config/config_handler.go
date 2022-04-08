@@ -6,7 +6,7 @@ import (
 )
 
 type ConfigHandler interface {
-	CreateConfig() error
+	CreateConfig() (*Config, error)
 	RemoveConfig() error
 	SaveConfig() error
 	LoadConfig() (*Config, error)

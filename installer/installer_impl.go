@@ -59,7 +59,7 @@ func (installer *InstallerImpl) Reset() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = installer.ConfigHandler.CreateConfig()
+	_, err = installer.ConfigHandler.CreateConfig()
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -56,7 +56,7 @@ func init() {
 	ConfigHandler = config.NewConfigHandler(ConfigPath, CachePath, wd)
 	c, _ := ConfigHandler.LoadConfig()
 	if c == nil {
-		err := ConfigHandler.CreateConfig()
+		c, err = ConfigHandler.CreateConfig()
 		PanicIfErr(err)
 	}
 

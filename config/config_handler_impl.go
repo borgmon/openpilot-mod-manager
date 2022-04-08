@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/borgmon/openpilot-mod-manager/file"
@@ -20,20 +21,20 @@ type ConfigHandlerImpl struct {
 
 func NewConfigHandler(ConfigPath string, CachePath string, OPPath string) ConfigHandler {
 	return &ConfigHandlerImpl{
-		Config:     &Config{},
+		Config:     &Config{OPVersion: "master"},
 		ConfigPath: ConfigPath,
 		CachePath:  CachePath,
 		OPPath:     OPPath,
 	}
 }
 
-func (config ConfigHandlerImpl) CreateConfig() error {
+func (config ConfigHandlerImpl) CreateConfig() (*Config, error) {
 	config.Config = &Config{Mods: []*mod.Mod{}}
 	err := config.SaveConfig()
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
-	return nil
+	return config.Config, nil
 }
 
 func (config ConfigHandlerImpl) RemoveConfig() error {
