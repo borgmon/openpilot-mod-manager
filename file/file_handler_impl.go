@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/borgmon/openpilot-mod-manager/common"
@@ -37,36 +38,34 @@ func (handler *FileHandlerImpl) RemoveFile(name string) error {
 }
 
 func (handler *FileHandlerImpl) AddLine(path string, m map[int]string) error {
-	file, err := os.OpenFile(path, os.O_RDWR, 0)
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		err := handler.NewFile(path)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		data, err = ioutil.ReadFile(path)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
+	text := string(data)
+	lines := strings.Split(text, "\n")
+	newLines := lines
+	offset := 0
+	for i, _ := range lines {
+		if appendText, ok := m[i]; ok {
+			l := []string{appendText}
+			newLines = append(newLines[:i+offset], append(l, newLines[(i+offset):]...)...)
+			offset++
+		}
+	}
+
+	err = handler.SaveFile(path, []byte(strings.Join(newLines, "\n")))
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	defer file.Close()
-	writer := bufio.NewWriter(file)
-	reader := bufio.NewReader(file)
-	rw := bufio.NewReadWriter(reader, writer)
-	line := 1
-
-	for {
-		_, err := rw.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			return errors.WithStack(err)
-		}
-		line++
-		if data, ok := m[line]; ok {
-			_, err = rw.WriteString(data)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-		}
-		err = rw.Flush()
-		if err != nil {
-			return errors.WithStack(err)
-		}
-	}
+	return nil
 }
 
 func (handler *FileHandlerImpl) ReplaceLine(path string, m map[int]string) error {
@@ -172,7 +171,7 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]patch.
 			if err == io.EOF {
 				result = append(result, &patch.PatchImpl{
 					Path:       opPath,
-					LineNumber: i,
+					LineNumber: start,
 					Data:       buf,
 					Operand:    operand,
 				})
@@ -180,25 +179,38 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]patch.
 			}
 			return nil, errors.WithStack(err)
 		}
-		i++
 		if op := getOperands(line); op != "" {
 			if buf != "" {
 				result = append(result, &patch.PatchImpl{
 					Path:       opPath,
-					LineNumber: i,
+					LineNumber: start,
 					Data:       buf,
 					Operand:    operand,
 				})
 			}
 			operand = op
 			buf = ""
-			start = i
-		}
-		if start != 0 {
+			start, err = parseLineNum(line)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+		} else {
 			buf += line
 		}
+		i++
 	}
 
+}
+
+func parseLineNum(line string) (int, error) {
+	parts := strings.Split(line, "#")
+	last := parts[len(parts)-1]
+	last = last[:len(last)-1]
+	num, err := strconv.Atoi(last)
+	if err != nil {
+		return 0, errors.WithStack(err)
+	}
+	return num, nil
 }
 
 func getOperands(line string) string {

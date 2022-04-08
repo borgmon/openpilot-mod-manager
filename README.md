@@ -131,4 +131,5 @@ And you are done! Share your mod url and let people try it out!
 - [ ] a desktop wrapper similar to [OpenpilotToolkit](https://github.com/spektor56/OpenpilotToolkit), allowing user ssh into devices and manage mod remotely with UI
 - [ ] use worker pool for injection and mod loading
 - [ ] upgrades
+- [ ] on device options
 

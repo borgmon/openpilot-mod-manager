@@ -37,10 +37,10 @@ func (installer *InstallerImpl) Apply() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = git.GetGitHandler().CommitBranch(installer.ConfigHandler.GetPaths().OPPath, git.GetGitHandler().GenerateBranchName())
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	// err = git.GetGitHandler().CommitBranch(installer.ConfigHandler.GetPaths().OPPath, git.GetGitHandler().GenerateBranchName())
+	// if err != nil {
+	// 	return errors.WithStack(err)
+	// }
 	return nil
 }
 

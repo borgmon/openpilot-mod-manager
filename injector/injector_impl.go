@@ -1,6 +1,8 @@
 package injector
 
 import (
+	"strings"
+
 	"github.com/borgmon/openpilot-mod-manager/common"
 	"github.com/borgmon/openpilot-mod-manager/file"
 	ommerrors "github.com/borgmon/openpilot-mod-manager/omm-errors"
@@ -12,7 +14,7 @@ type InjectorImpl struct {
 	Changes map[string]patch.Patch // [filepath#linenum]:patch
 }
 
-func GetInjector() Injector {
+func NewInjector() Injector {
 	return &InjectorImpl{Changes: map[string]patch.Patch{}}
 }
 
@@ -34,7 +36,9 @@ func (injector *InjectorImpl) Inject() {
 	appendMap := map[string][]patch.Patch{}
 	replaceMap := map[string][]patch.Patch{}
 	for k := range injector.Changes {
-		path := common.GetPathFromFilePath(k)
+		parts := strings.Split(k, "#")
+		path := parts[0]
+
 		switch injector.Changes[k].GetOperand() {
 		case patch.TypeOperandAppend:
 			if v, ok := appendMap[path]; ok {
@@ -49,29 +53,30 @@ func (injector *InjectorImpl) Inject() {
 				replaceMap[path] = []patch.Patch{injector.Changes[k]}
 			}
 		}
+
 	}
 	for k := range appendMap {
-		go injector.doInject(k, appendMap[k], replaceMap[k])
+		injector.doInject(k, appendMap[k], replaceMap[k])
 	}
 }
 
 func (injector *InjectorImpl) doInject(path string, appends []patch.Patch, replaces []patch.Patch) error {
 	// remap into [line num]:patch
 	appendMap := map[int]string{}
-	replaceMap := map[int]string{}
+	// replaceMap := map[int]string{}
 	for _, patch := range appends {
 		appendMap[patch.GetLineNumber()] = patch.GetData()
 	}
-	for _, patch := range replaces {
-		replaceMap[patch.GetLineNumber()] = patch.GetData()
-	}
+	// for _, patch := range replaces {
+	// 	replaceMap[patch.GetLineNumber()] = patch.GetData()
+	// }
 	err := file.GetFileHandler().AddLine(path, appendMap)
 	if err != nil {
 		return common.LogIfErr(errors.WithStack(err))
 	}
-	err = file.GetFileHandler().ReplaceLine(path, replaceMap)
-	if err != nil {
-		return common.LogIfErr(errors.WithStack(err))
-	}
+	// err = file.GetFileHandler().ReplaceLine(path, replaceMap)
+	// if err != nil {
+	// 	return common.LogIfErr(errors.WithStack(err))
+	// }
 	return nil
 }

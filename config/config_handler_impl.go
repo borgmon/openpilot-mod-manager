@@ -2,6 +2,7 @@ package config
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/borgmon/openpilot-mod-manager/file"
 	"github.com/borgmon/openpilot-mod-manager/injector"
@@ -12,14 +13,16 @@ import (
 )
 
 type ConfigHandlerImpl struct {
-	Config *Config
-	Paths  *Paths
+	Config   *Config
+	Paths    *Paths
+	Injector injector.Injector
 }
 
-func NewConfigHandler(path *Paths) ConfigHandler {
+func NewConfigHandler(path *Paths, Injector injector.Injector) ConfigHandler {
 	return &ConfigHandlerImpl{
-		Config: &Config{OPVersion: "master", Mods: []*mod.Mod{}},
-		Paths:  path,
+		Config:   &Config{OPVersion: "master", Mods: []*mod.Mod{}},
+		Paths:    path,
+		Injector: Injector,
 	}
 }
 
@@ -60,6 +63,9 @@ func (config ConfigHandlerImpl) LoadConfig() (*Config, error) {
 }
 
 func (config ConfigHandlerImpl) AddMod(mod *mod.Mod) error {
+	if r, _ := config.FindMod(mod.Name); r != nil {
+		return nil
+	}
 	config.Config.Mods = append(config.Config.Mods, mod)
 	err := config.SaveConfig()
 	if err != nil {
@@ -118,19 +124,41 @@ func (config ConfigHandlerImpl) ApplyMods() error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
+		paths = filterFiles(paths)
 		for _, path := range paths {
-			absPath := filepath.Join(config.Paths.OPPath, path)
+			relativePath := strings.ReplaceAll(path, rootPath, "")
+			absPath := filepath.Join(config.Paths.OPPath, relativePath)
 			patches, err := file.GetFileHandler().ParsePatch(path, absPath)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			for _, p := range patches {
-				injector.GetInjector().Pending(p)
+				config.Injector.Pending(p)
 			}
 		}
 	}
-	injector.GetInjector().Inject()
+	config.Injector.Inject()
 	return nil
+}
+
+func filterFiles(paths []string) []string {
+	blackList := []string{"manifest.yml", "omm.yml"}
+	results := []string{}
+	for _, path := range paths {
+		if !eleInList(path, blackList) {
+			results = append(results, path)
+		}
+	}
+	return results
+}
+
+func eleInList(path string, blackList []string) bool {
+	for _, black := range blackList {
+		if strings.Contains(path, black) {
+			return true
+		}
+	}
+	return false
 }
 
 func (config ConfigHandlerImpl) GetManifest(name string) (*manifest.Manifest, error) {

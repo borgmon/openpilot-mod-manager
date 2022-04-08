@@ -11,6 +11,7 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/common"
 	"github.com/borgmon/openpilot-mod-manager/config"
 	"github.com/borgmon/openpilot-mod-manager/file"
+	"github.com/borgmon/openpilot-mod-manager/injector"
 	"github.com/borgmon/openpilot-mod-manager/installer"
 	"github.com/spf13/cobra"
 )
@@ -35,7 +36,7 @@ func Execute() {
 }
 
 var CachePath = ""
-var ConfigFilePath = ""
+var OPPath = ""
 
 var ConfigHandler config.ConfigHandler
 var Installer installer.Installer
@@ -46,15 +47,17 @@ func init() {
 	home, err := os.UserHomeDir()
 	common.PanicIfErr(err)
 
-	rootCmd.PersistentFlags().StringVarP(&ConfigFilePath, "config", "c", filepath.Join(wd, config.CONFIG_FILE_NAME), "config file omm.yml")
-	rootCmd.PersistentFlags().StringVarP(&CachePath, "cache", "a", filepath.Join(home, config.CACHEPATH), "cache dir")
+	rootCmd.PersistentFlags().StringVarP(&OPPath, "openpilot", "o", filepath.Join(wd, config.CONFIG_FILE_NAME), "openpilot path")
+	rootCmd.PersistentFlags().StringVarP(&CachePath, "cache", "c", filepath.Join(home, config.CACHEPATH), "cache path")
 }
 
 func populate() {
+	inj := injector.NewInjector()
 	ConfigHandler = config.NewConfigHandler(&config.Paths{
-		ConfigPath: ConfigFilePath,
+		ConfigPath: filepath.Join(OPPath, config.CONFIG_FILE_NAME),
 		CachePath:  CachePath,
-		OPPath:     filepath.Dir(ConfigFilePath)})
+		OPPath:     OPPath},
+		inj)
 	c, _ := ConfigHandler.LoadConfig()
 	if c == nil {
 		err := ConfigHandler.SaveConfig()
