@@ -120,6 +120,9 @@ func (installer *InstallerImpl) RemoveAllOMMBranches() error {
 
 func (installer *InstallerImpl) Remove(name string) error {
 	fmt.Printf("Removing: %v\n", name)
+	if name == param.BaseModName {
+		return errors.New("You cannot uninstall base mod")
+	}
 	err := config.GetConfigHandler().RemoveMod(name)
 	if err != nil {
 		return err
@@ -217,6 +220,41 @@ func (installer *InstallerImpl) installFromUrl(path string, force bool) error {
 func (installer *InstallerImpl) List() error {
 	_, err := fmt.Println(config.GetConfigHandler().BuildModList())
 	return err
+}
+
+func (installer *InstallerImpl) Info(urlOrName string) error {
+	var man *manifest.Manifest
+	var err error
+	if common.IsUrl(urlOrName) {
+		err := cache.GetCacheHandler().Download(urlOrName, false)
+		if err != nil {
+			return err
+		}
+		name, err := common.GetNameFromGithub(urlOrName)
+		if err != nil {
+			return err
+		}
+		man, err = cache.GetCacheHandler().GetManifest(name)
+		if err != nil {
+			return err
+		}
+	} else if strings.Contains(urlOrName, "/") {
+		man, err = manifest.GetManifestFromFile(urlOrName)
+		if err != nil {
+			return err
+		}
+	} else {
+		man, err = cache.GetCacheHandler().GetManifest(urlOrName)
+		if err != nil {
+			return err
+		}
+	}
+	info, err := man.BuildInfo()
+	if err != nil {
+		return err
+	}
+	fmt.Println(info)
+	return nil
 }
 
 func (installer *InstallerImpl) Init(OPPath string) error {

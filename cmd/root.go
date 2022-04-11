@@ -57,8 +57,19 @@ func init() {
 	home, err := os.UserHomeDir()
 	common.PanicIfErr(err)
 
-	rootCmd.PersistentFlags().StringVarP(&OPPath, "openpilot", "o", wd, "openpilot path")
-	rootCmd.PersistentFlags().StringVarP(&OMMPath, "omm", "m", filepath.Join(home, config.CACHEPATH), "omm path")
+	if opPath, ok := os.LookupEnv("OPENPILOT_PATH"); ok {
+		OPPath = opPath
+	} else {
+		OPPath = wd
+	}
+	if ommPath, ok := os.LookupEnv("OMM_PATH"); ok {
+		OMMPath = ommPath
+	} else {
+		OMMPath = filepath.Join(home, config.CACHEPATH)
+	}
+
+	rootCmd.PersistentFlags().StringVarP(&OPPath, "openpilot", "o", OPPath, "openpilot path")
+	rootCmd.PersistentFlags().StringVarP(&OMMPath, "omm", "m", OMMPath, "omm path")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "display extra info")
 	rootCmd.Flags().BoolVar(&versionFlag, "version", false, "OMM version")
 }

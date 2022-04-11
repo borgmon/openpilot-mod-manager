@@ -7,4 +7,5 @@ type Installer interface {
 	Remove(name string) error
 	List() error
 	Init(OPPath string) error
+	Info(name string) error
 }
