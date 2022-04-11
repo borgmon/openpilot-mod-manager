@@ -13,11 +13,14 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/config"
 	"github.com/borgmon/openpilot-mod-manager/file"
 	"github.com/borgmon/openpilot-mod-manager/param"
+	"github.com/borgmon/openpilot-mod-manager/version"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 const OMMVersion = "v0.1"
+
+var versionFlag = false
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -27,7 +30,12 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	PreRunE: func(cmd *cobra.Command, args []string) error { return loadParam() },
+	Run: func(cmd *cobra.Command, args []string) {
+		if versionFlag {
+			fmt.Println(version.OMMVersion)
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -52,6 +60,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&OPPath, "openpilot", "o", wd, "openpilot path")
 	rootCmd.PersistentFlags().StringVarP(&OMMPath, "omm", "m", filepath.Join(home, config.CACHEPATH), "omm path")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "display extra info")
+	rootCmd.Flags().BoolVar(&versionFlag, "version", false, "OMM version")
 }
 
 func loadParam() error {
