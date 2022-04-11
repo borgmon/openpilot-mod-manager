@@ -67,7 +67,7 @@ func (handler *FileHandlerImpl) ModifyFile(path string, addMap map[int]string, d
 	for i, _ := range lines {
 		if appendText, ok := addMap[i]; ok {
 			l := []string{appendText}
-			newLines = append(newLines[:i+offset], append(l, newLines[(i+offset):]...)...)
+			newLines = append(newLines[:i+offset-1], append(l, newLines[(i+offset-1):]...)...)
 			offset++
 		}
 		if replaceText, ok := deleteMap[i]; ok {
