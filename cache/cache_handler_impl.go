@@ -1,9 +1,13 @@
 package cache
 
 import (
+	"errors"
+	"os"
 	"path/filepath"
 
+	"github.com/borgmon/openpilot-mod-manager/common"
 	"github.com/borgmon/openpilot-mod-manager/config"
+	"github.com/borgmon/openpilot-mod-manager/file"
 	"github.com/borgmon/openpilot-mod-manager/git"
 	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/param"
@@ -22,11 +26,7 @@ func GetCacheHandler() CacheHandler {
 }
 
 func (cache *CacheHandlerImpl) GetManifest(name string) (*manifest.Manifest, error) {
-	mod, err := config.GetConfigHandler().FindMod(name)
-	if err != nil {
-		return nil, err
-	}
-	man, err := manifest.GetManifestFromFile(filepath.Join(param.PathStore.OMMPath, mod.Name))
+	man, err := manifest.GetManifestFromFile(filepath.Join(param.PathStore.OMMPath, name))
 	if err != nil {
 		return nil, err
 	}
@@ -45,10 +45,38 @@ func (cache *CacheHandlerImpl) GetManifests() ([]*manifest.Manifest, error) {
 	return result, nil
 }
 
-func (cache *CacheHandlerImpl) Download(url string) error {
-	err := git.GetGitHandler().Clone(param.PathStore.OMMPath, url)
+func (cache *CacheHandlerImpl) Download(url string, force bool) error {
+	name, err := common.GetNameFromGithub(url)
 	if err != nil {
 		return err
 	}
+	path := filepath.Join(param.PathStore.OMMPath, name)
+	_, err = cache.GetManifest(name)
+	if err != nil {
+		e := errors.Unwrap(err)
+		if _, ok := e.(*os.PathError); ok {
+			err := git.GetGitHandler().Clone(param.PathStore.OMMPath, url)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+	if force {
+		err = file.GetFileHandler().RemoveFolder(path)
+		if err != nil {
+			return err
+		}
+		err = git.GetGitHandler().Clone(param.PathStore.OMMPath, url)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func (cache *CacheHandlerImpl) RemoveCache() error {
+	return file.GetFileHandler().RemoveFolder(param.PathStore.OMMPath)
 }

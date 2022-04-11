@@ -30,27 +30,52 @@ func GetInstaller() Installer {
 	return installerInstance
 }
 
+func checkoutMainBranch() error {
+	return git.GetGitHandler().CheckoutBranch(param.PathStore.OPPath, config.GetConfigHandler().GetConfig().OPVersion)
+}
+
+func checkoutMainIfError(err error) error {
+	if err != nil {
+		err := checkoutMainBranch()
+		if err != nil {
+			return err
+		}
+	}
+	return err
+}
+
 func (installer *InstallerImpl) Apply() error {
 	fmt.Println("Applying...")
-	err := git.GetGitHandler().CheckoutBranch(param.PathStore.OPPath, config.GetConfigHandler().GetConfig().OPVersion)
+	if _, ok := config.GetConfigHandler().FindMod("omm-base"); !ok {
+		err := installer.Install(param.BaseModUrl, false)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := checkoutMainBranch()
 	if err != nil {
 		return err
 	}
 	err = git.GetGitHandler().NewBranch(param.PathStore.OPPath, git.GetGitHandler().GenerateBranchName())
 	if err != nil {
-		return err
+		return checkoutMainIfError(err)
+	}
+	err = config.GetConfigHandler().SortMod()
+	if err != nil {
+		return checkoutMainIfError(err)
 	}
 	err = config.GetConfigHandler().ApplyMods()
 	if err != nil {
-		return err
+		return checkoutMainIfError(err)
 	}
 	err = git.GetGitHandler().AddBranch(param.PathStore.OPPath)
 	if err != nil {
-		return err
+		return checkoutMainIfError(err)
 	}
 	err = git.GetGitHandler().CommitBranch(param.PathStore.OPPath, config.GetConfigHandler().BuildModList())
 	if err != nil {
-		return err
+		return checkoutMainIfError(err)
 	}
 	return nil
 }
@@ -65,11 +90,11 @@ func (installer *InstallerImpl) Reset() error {
 	if err != nil {
 		return err
 	}
-	err = file.GetFileHandler().RemoveFolder(param.PathStore.OMMPath)
+	err = cache.GetCacheHandler().RemoveCache()
 	if err != nil {
 		return err
 	}
-	_, err = config.GetConfigHandler().CreateConfig()
+	err = file.GetFileHandler().RemoveFile(param.PathStore.ConfigPath)
 	if err != nil {
 		return err
 	}
@@ -94,12 +119,8 @@ func (installer *InstallerImpl) RemoveAllOMMBranches() error {
 }
 
 func (installer *InstallerImpl) Remove(name string) error {
-	fmt.Printf("Removing: %v", name)
+	fmt.Printf("Removing: %v\n", name)
 	err := config.GetConfigHandler().RemoveMod(name)
-	if err != nil {
-		return err
-	}
-	err = file.GetFileHandler().RemoveFolder(filepath.Join(param.PathStore.OMMPath, name))
 	if err != nil {
 		return err
 	}
@@ -134,7 +155,7 @@ func (installer *InstallerImpl) installFromFile(path string, force bool) error {
 		fmt.Println("This Mod is already exist")
 		return nil
 	}
-	fmt.Printf("Installing: %v@%v", man.Name, man.Version)
+	fmt.Printf("Installing: %v@%v\n", man.Name, man.Version)
 	err = config.GetConfigHandler().AddMod(&mod.Mod{
 		Name:    man.Name,
 		Version: man.Version,
@@ -162,13 +183,13 @@ func (installer *InstallerImpl) installFromUrl(path string, force bool) error {
 			fmt.Println("This Mod is already exist")
 			return nil
 		} else {
-			err = git.GetGitHandler().Pull(filepath.Join(param.PathStore.OMMPath, name))
+			err = cache.GetCacheHandler().Download(path, force)
 			if err != nil {
 				return err
 			}
 		}
 	}
-	err = cache.GetCacheHandler().Download(path)
+	err = cache.GetCacheHandler().Download(path, force)
 	if err != nil {
 		return err
 	}
@@ -181,7 +202,7 @@ func (installer *InstallerImpl) installFromUrl(path string, force bool) error {
 	} else {
 		version = specificVersion
 	}
-	fmt.Printf("Installing: %v@%v", name, version)
+	fmt.Printf("Installing: %v@%v\n", name, version)
 	err = config.GetConfigHandler().AddMod(&mod.Mod{
 		Name:    name,
 		Version: version,
@@ -208,8 +229,18 @@ func (installer *InstallerImpl) Init(OPPath string) error {
 			if err != nil {
 				return err
 			}
+			if strings.Contains(version, "omm-") {
+				return errors.New("Cannot init based on a omm branch.")
+			}
 			c := config.NewConfigHandler(version)
-			return c.SaveConfig()
+			err = c.SaveConfig()
+			if err != nil {
+				return err
+			}
+			err = installer.Install(param.BaseModUrl, true)
+			if err != nil {
+				return err
+			}
 		} else {
 			return err
 		}

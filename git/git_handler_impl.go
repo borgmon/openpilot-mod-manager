@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/borgmon/openpilot-mod-manager/common"
+	"github.com/borgmon/openpilot-mod-manager/param"
 	"github.com/ldez/go-git-cmd-wrapper/add"
 	"github.com/ldez/go-git-cmd-wrapper/branch"
 	"github.com/ldez/go-git-cmd-wrapper/checkout"
@@ -36,7 +37,7 @@ func (handler *GitHandlerImpl) Clone(path, url string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	out, err := git.Clone(clone.Repository(url), git.Debug)
+	out, err := git.Clone(clone.Repository(url), git.Debugger(param.ConfigStore.Verbose))
 	common.LogIfVarbose(out)
 	if err != nil {
 		return err
@@ -49,7 +50,7 @@ func (handler *GitHandlerImpl) GetBranchName(gitPath string) (string, error) {
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
-	out, err := git.Status(status.Short, status.Branch, git.Debug)
+	out, err := git.Status(status.Short, status.Branch, git.Debugger(param.ConfigStore.Verbose))
 	common.LogIfVarbose(out)
 	if err != nil {
 		return "", err
@@ -63,7 +64,7 @@ func (handler *GitHandlerImpl) NewBranch(gitPath string, name string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	out, err := git.Checkout(checkout.NewBranch(handler.GenerateBranchName()), git.Debug)
+	out, err := git.Checkout(checkout.NewBranch(handler.GenerateBranchName()), git.Debugger(param.ConfigStore.Verbose))
 	common.LogIfVarbose(out)
 	if err != nil {
 		return err
@@ -76,7 +77,7 @@ func (handler *GitHandlerImpl) RemoveBranch(gitPath string, name string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	out, err := git.Branch(branch.DeleteForce, branch.BranchName(name), git.Debug)
+	out, err := git.Branch(branch.DeleteForce, branch.BranchName(name), git.Debugger(param.ConfigStore.Verbose))
 	common.LogIfVarbose(out)
 	if err != nil {
 		return err
@@ -86,11 +87,12 @@ func (handler *GitHandlerImpl) RemoveBranch(gitPath string, name string) error {
 }
 
 func (handler *GitHandlerImpl) CheckoutBranch(gitPath string, name string) error {
+	common.LogIfVarbose(fmt.Sprintf("Checkout %v:%v\n", gitPath, name))
 	err := os.Chdir(gitPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	out, err := git.Checkout(checkout.Branch(name), checkout.Force, git.Debug)
+	out, err := git.Checkout(checkout.Branch(name), checkout.Force, git.Debugger(param.ConfigStore.Verbose))
 	common.LogIfVarbose(out)
 	if err != nil {
 		return err
@@ -108,7 +110,7 @@ func (handler *GitHandlerImpl) CommitBranch(gitPath string, name string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	out, err := git.Commit(commit.Amend, commit.Message(name), commit.AllowEmpty, git.Debug)
+	out, err := git.Commit(commit.Amend, commit.Message(name), commit.AllowEmpty, git.Debugger(param.ConfigStore.Verbose))
 	common.LogIfVarbose(out)
 	if err != nil {
 		return err
@@ -122,7 +124,7 @@ func (handler *GitHandlerImpl) AddBranch(gitPath string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	out, err := git.Add(add.All, git.Debug)
+	out, err := git.Add(add.All, git.Debugger(param.ConfigStore.Verbose))
 	common.LogIfVarbose(out)
 	if err != nil {
 		return err
@@ -136,7 +138,7 @@ func (handler *GitHandlerImpl) ResetBranch(gitPath string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	out, err := git.Reset(reset.Hard, git.Debug)
+	out, err := git.Reset(reset.Hard, git.Debugger(param.ConfigStore.Verbose))
 	common.LogIfVarbose(out)
 	if err != nil {
 		return err
@@ -149,7 +151,7 @@ func (handler *GitHandlerImpl) ListBranch(gitPath string) ([]string, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	out, err := git.Branch(branch.List, git.Debug)
+	out, err := git.Branch(branch.List, git.Debugger(param.ConfigStore.Verbose))
 	common.LogIfVarbose(out)
 	if err != nil {
 		return nil, err
@@ -163,7 +165,7 @@ func (handler *GitHandlerImpl) Pull(gitPath string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	out, err := git.Pull(pull.All, git.Debug)
+	out, err := git.Pull(pull.All, git.Debugger(param.ConfigStore.Verbose))
 	common.LogIfVarbose(out)
 	if err != nil {
 		return err

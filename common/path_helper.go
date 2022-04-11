@@ -19,7 +19,7 @@ func GetFileFromFilePath(filePath string) string {
 func GetUserFromGithub(urlStr string) (string, error) {
 	parts, err := ParseGithubUrl(urlStr)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", err
 	}
 	return (*parts)[0], nil
 }
@@ -27,7 +27,7 @@ func GetUserFromGithub(urlStr string) (string, error) {
 func GetNameFromGithub(urlStr string) (string, error) {
 	parts, err := ParseGithubUrl(urlStr)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", err
 	}
 	return (*parts)[1], nil
 }

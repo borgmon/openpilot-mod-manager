@@ -11,7 +11,7 @@ type ConfigHandler interface {
 	LoadConfig() (*Config, error)
 	AddMod(mod *mod.Mod) error
 	RemoveMod(name string) error
-	FindMod(name string) (*mod.Mod, error)
+	FindMod(name string) (*mod.Mod, bool)
 	SortMod() error
 	ApplyMods() error
 	GetConfig() *Config

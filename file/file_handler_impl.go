@@ -123,10 +123,6 @@ func (handler *FileHandlerImpl) NewFolder(path string) error {
 	return errors.WithStack(execRunner("mkdir", "-p", path))
 }
 
-func (handler *FileHandlerImpl) NewBranch(path string) error {
-	return errors.WithStack(execRunner("mkdir", "-p", path))
-}
-
 func (handler *FileHandlerImpl) NewFile(path string) error {
 	return errors.WithStack(execRunner("touch", path))
 }

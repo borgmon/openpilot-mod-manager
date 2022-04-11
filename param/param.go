@@ -13,6 +13,9 @@ type Config struct {
 var PathStore *Path
 var ConfigStore *Config
 
+const BaseModUrl = "https://github.com/borgmon/omm-base@main"
+const BaseModName = "omm-base"
+
 func NewParam(ConfigPath string, OMMPath string, OPPath string, Verbose bool) {
 	PathStore = &Path{
 		ConfigPath: ConfigPath,

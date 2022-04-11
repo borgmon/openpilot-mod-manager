@@ -13,8 +13,11 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/param"
 	"github.com/borgmon/openpilot-mod-manager/version"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"gopkg.in/yaml.v2"
 )
+
+var filePathBlackList = []string{manifest.MANIFEST_FILE_NAME, CONFIG_FILE_NAME, ".git"}
 
 type ConfigHandlerImpl struct {
 	Config *Config
@@ -87,7 +90,7 @@ func (config *ConfigHandlerImpl) LoadConfig() (*Config, error) {
 }
 
 func (config *ConfigHandlerImpl) AddMod(mod *mod.Mod) error {
-	if r, _ := config.FindMod(mod.Name); r != nil {
+	if _, ok := config.FindMod(mod.Name); ok {
 		return nil
 	}
 	config.Config.Mods = append(config.Config.Mods, mod)
@@ -99,15 +102,9 @@ func (config *ConfigHandlerImpl) AddMod(mod *mod.Mod) error {
 }
 
 func (config *ConfigHandlerImpl) RemoveMod(name string) error {
-	mods := []*mod.Mod{}
-
-	for _, mod := range config.Config.Mods {
-		if mod.Name != name {
-			mods = append(mods, mod)
-		}
-	}
-
-	config.Config.Mods = mods
+	config.Config.Mods = lo.Filter(config.Config.Mods, func(m *mod.Mod, i int) bool {
+		return m.Name != name
+	})
 	err := config.SaveConfig()
 	if err != nil {
 		return err
@@ -115,18 +112,23 @@ func (config *ConfigHandlerImpl) RemoveMod(name string) error {
 	return nil
 }
 
-func (config *ConfigHandlerImpl) FindMod(name string) (*mod.Mod, error) {
-	for _, mod := range config.Config.Mods {
-		if mod.Name == name {
-			return mod, nil
-		}
-	}
-	return nil, nil
+func (config *ConfigHandlerImpl) FindMod(name string) (*mod.Mod, bool) {
+	return lo.Find(config.Config.Mods, func(m *mod.Mod) bool {
+		return m.Name == name
+	})
 }
 
 // TODO: dependencies
 func (config ConfigHandlerImpl) SortMod() error {
-	return errors.New("SortMod not implemented")
+	if baseMod, ok := config.FindMod(param.BaseModName); ok {
+		config.Config.Mods = append([]*mod.Mod{baseMod}, lo.Filter(config.Config.Mods, func(mod *mod.Mod, i int) bool {
+			return mod.Name != param.BaseModName
+		})...)
+	} else {
+		return errors.New("No base mod found")
+	}
+
+	return nil
 }
 
 func (config *ConfigHandlerImpl) ApplyMods() error {
@@ -147,7 +149,7 @@ func (config *ConfigHandlerImpl) ApplyMods() error {
 		if err != nil {
 			return err
 		}
-		paths = filterFiles(paths)
+		paths = filterBlacklist(paths, filePathBlackList)
 		for _, path := range paths {
 			relativePath := strings.ReplaceAll(path, rootPath, "")
 			absPath := filepath.Join(param.PathStore.OPPath, relativePath)
@@ -165,33 +167,14 @@ func (config *ConfigHandlerImpl) ApplyMods() error {
 	return nil
 }
 
-func filterFiles(paths []string) []string {
-	blackList := []string{manifest.MANIFEST_FILE_NAME, CONFIG_FILE_NAME, ".git"}
-	results := []string{}
-	for _, path := range paths {
-		if !pathInBlackList(path, blackList) {
-			results = append(results, path)
-		}
-	}
-	return results
-}
-
-func pathInBlackList(path string, blackList []string) bool {
-	for _, part := range strings.Split(path, "/") {
-		if partsInBlackList(part, blackList) {
-			return true
-		}
-	}
-	return false
-}
-
-func partsInBlackList(path string, blackList []string) bool {
-	for _, black := range blackList {
-		if black == path {
-			return true
-		}
-	}
-	return false
+func filterBlacklist(paths, blackList []string) []string {
+	return lo.Filter(paths, func(path string, i int) bool {
+		parts := strings.Split(path, "/")
+		_, ok := lo.Find(parts, func(t string) bool {
+			return lo.Contains(blackList, t)
+		})
+		return !ok
+	})
 }
 
 func (config *ConfigHandlerImpl) GetConfig() *Config {
