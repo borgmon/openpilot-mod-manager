@@ -8,6 +8,7 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/file"
 	"github.com/borgmon/openpilot-mod-manager/git"
 	"github.com/borgmon/openpilot-mod-manager/injector"
+	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/mod"
 	"github.com/borgmon/openpilot-mod-manager/param"
 	"github.com/pkg/errors"
@@ -36,7 +37,7 @@ func LoadConfigHandler() (ConfigHandler, error) {
 	}}
 	_, err := c.LoadConfig()
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	configHandlerInstance = c
 	return c, nil
@@ -50,7 +51,7 @@ func (config *ConfigHandlerImpl) CreateConfig() (*Config, error) {
 	c := NewConfigHandler(config.Config.OPVersion)
 	err := c.SaveConfig()
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	return c.GetConfig(), nil
 }
@@ -66,7 +67,7 @@ func (config *ConfigHandlerImpl) SaveConfig() error {
 	}
 	err = file.GetFileHandler().SaveFile(param.PathStore.ConfigPath, bytes)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 }
@@ -74,7 +75,7 @@ func (config *ConfigHandlerImpl) SaveConfig() error {
 func (config *ConfigHandlerImpl) LoadConfig() (*Config, error) {
 	bytes, err := file.GetFileHandler().LoadFile(param.PathStore.ConfigPath)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	err = yaml.Unmarshal(bytes, config.Config)
 	if err != nil {
@@ -90,7 +91,7 @@ func (config *ConfigHandlerImpl) AddMod(mod *mod.Mod) error {
 	config.Config.Mods = append(config.Config.Mods, mod)
 	err := config.SaveConfig()
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 }
@@ -107,7 +108,7 @@ func (config *ConfigHandlerImpl) RemoveMod(name string) error {
 	config.Config.Mods = mods
 	err := config.SaveConfig()
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 }
@@ -133,7 +134,7 @@ func (config *ConfigHandlerImpl) ApplyMods() error {
 			rootPath = filepath.Join(param.PathStore.OMMPath, mod.Name)
 			err := git.GetGitHandler().CheckoutBranch(rootPath, mod.Version)
 			if err != nil {
-				return errors.WithStack(err)
+				return err
 			}
 
 		} else {
@@ -142,7 +143,7 @@ func (config *ConfigHandlerImpl) ApplyMods() error {
 
 		paths, err := file.GetFileHandler().ListAllFilesRecursively(rootPath)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 		paths = filterFiles(paths)
 		for _, path := range paths {
@@ -150,7 +151,7 @@ func (config *ConfigHandlerImpl) ApplyMods() error {
 			absPath := filepath.Join(param.PathStore.OPPath, relativePath)
 			patches, err := file.GetFileHandler().ParsePatch(path, absPath)
 			if err != nil {
-				return errors.WithStack(err)
+				return err
 			}
 			for _, p := range patches {
 				p.Mod = mod
@@ -163,7 +164,7 @@ func (config *ConfigHandlerImpl) ApplyMods() error {
 }
 
 func filterFiles(paths []string) []string {
-	blackList := []string{"manifest.yml", "omm.yml", ".git"}
+	blackList := []string{manifest.MANIFEST_FILE_NAME, CONFIG_FILE_NAME, ".git"}
 	results := []string{}
 	for _, path := range paths {
 		if !pathInBlackList(path, blackList) {

@@ -5,7 +5,10 @@ Copyright © 2022 borgmon
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/borgmon/openpilot-mod-manager/common"
+	"github.com/borgmon/openpilot-mod-manager/config"
 	"github.com/borgmon/openpilot-mod-manager/installer"
 	"github.com/spf13/cobra"
 )
@@ -13,9 +16,9 @@ import (
 // applyCmd represents the remove command
 var applyCmd = &cobra.Command{
 	Use:     "apply",
-	Short:   "Apply current omm.yml",
+	Short:   fmt.Sprintf("Apply current %v", config.CONFIG_FILE_NAME),
 	Example: `omm apply`,
-	PreRun:  func(cmd *cobra.Command, args []string) { populate() },
+	PreRunE: func(cmd *cobra.Command, args []string) error { return loadParam() },
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return common.LogIfErr(installer.GetInstaller().Apply())
 	},

@@ -5,6 +5,7 @@ Copyright © 2022 borgmon
 package cmd
 
 import (
+	"github.com/borgmon/openpilot-mod-manager/common"
 	"github.com/borgmon/openpilot-mod-manager/file"
 	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/param"
@@ -27,9 +28,9 @@ var initCmd = &cobra.Command{
 	Long: `Example:
 omm mod init`,
 	Example: "example",
-	PreRun:  func(cmd *cobra.Command, args []string) { populate() },
+	PreRunE: func(cmd *cobra.Command, args []string) error { return loadParam() },
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return manifest.GetManifestHandler().Init(param.PathStore.OPPath)
+		return common.LogIfErr(manifest.GetManifestHandler().Init(param.PathStore.OPPath))
 	},
 	SilenceUsage: true,
 }
@@ -40,12 +41,12 @@ var newCmd = &cobra.Command{
 	Long: `Example:
 omm mod new selfdrive/common/params.cc`,
 	Example: "example",
-	PreRun:  func(cmd *cobra.Command, args []string) { populate() },
+	PreRunE: func(cmd *cobra.Command, args []string) error { return loadParam() },
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			return errors.New("Invalid Args")
 		}
-		return file.GetFileHandler().NewFileRecursively(args[0])
+		return common.LogIfErr(file.GetFileHandler().NewFileRecursively(args[0]))
 	},
 	SilenceUsage: true,
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/git"
 	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/param"
-	"github.com/pkg/errors"
 )
 
 type CacheHandlerImpl struct{}
@@ -25,11 +24,11 @@ func GetCacheHandler() CacheHandler {
 func (cache *CacheHandlerImpl) GetManifest(name string) (*manifest.Manifest, error) {
 	mod, err := config.GetConfigHandler().FindMod(name)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	man, err := manifest.GetManifestFromFile(filepath.Join(param.PathStore.OMMPath, mod.Name))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	return man, nil
 }
@@ -39,7 +38,7 @@ func (cache *CacheHandlerImpl) GetManifests() ([]*manifest.Manifest, error) {
 	for _, mod := range config.GetConfigHandler().GetConfig().Mods {
 		man, err := cache.GetManifest(mod.Name)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		result = append(result, man)
 	}
@@ -49,7 +48,7 @@ func (cache *CacheHandlerImpl) GetManifests() ([]*manifest.Manifest, error) {
 func (cache *CacheHandlerImpl) Download(url string) error {
 	err := git.GetGitHandler().Clone(param.PathStore.OMMPath, url)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -38,7 +39,7 @@ func (handler *GitHandlerImpl) Clone(path, url string) error {
 	out, err := git.Clone(clone.Repository(url), git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 }
@@ -51,7 +52,7 @@ func (handler *GitHandlerImpl) GetBranchName(gitPath string) (string, error) {
 	out, err := git.Status(status.Short, status.Branch, git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", err
 	}
 	out = strings.Split(out, "\n")[0]
 	return out[3:], nil
@@ -65,7 +66,7 @@ func (handler *GitHandlerImpl) NewBranch(gitPath string, name string) error {
 	out, err := git.Checkout(checkout.NewBranch(handler.GenerateBranchName()), git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 }
@@ -78,7 +79,7 @@ func (handler *GitHandlerImpl) RemoveBranch(gitPath string, name string) error {
 	out, err := git.Branch(branch.DeleteForce, branch.BranchName(name), git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	return nil
@@ -92,14 +93,14 @@ func (handler *GitHandlerImpl) CheckoutBranch(gitPath string, name string) error
 	out, err := git.Checkout(checkout.Branch(name), git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 }
 
 func (handler *GitHandlerImpl) GenerateBranchName() string {
 	now := time.Now()
-	return "omm-" + now.Format("2006-01-02-3-4-5-pm")
+	return fmt.Sprintf("omm-%v", now.Format("2006-01-02-3-4-5-pm"))
 }
 
 func (handler *GitHandlerImpl) CommitBranch(gitPath string, name string) error {
@@ -110,7 +111,7 @@ func (handler *GitHandlerImpl) CommitBranch(gitPath string, name string) error {
 	out, err := git.Commit(commit.Amend, commit.Message(name), commit.AllowEmpty, git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 
@@ -124,7 +125,7 @@ func (handler *GitHandlerImpl) AddBranch(gitPath string) error {
 	out, err := git.Add(add.All, git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 
@@ -138,7 +139,7 @@ func (handler *GitHandlerImpl) ResetBranch(gitPath string) error {
 	out, err := git.Reset(reset.Hard, git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 }
@@ -151,7 +152,7 @@ func (handler *GitHandlerImpl) ListBranch(gitPath string) ([]string, error) {
 	out, err := git.Branch(branch.List, git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	return strings.Split(out, "\n"), nil
@@ -165,7 +166,7 @@ func (handler *GitHandlerImpl) Pull(gitPath string) error {
 	out, err := git.Pull(pull.All, git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	return nil

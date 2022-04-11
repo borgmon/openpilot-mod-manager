@@ -1,6 +1,7 @@
 package patch
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -36,7 +37,7 @@ func KeyToPatch(key string, data string) (*Patch, error) {
 }
 
 func (patch *Patch) ToKey() string {
-	return patch.Path + "#" + strconv.Itoa(patch.LineNumber)
+	return fmt.Sprintf("%v#%v\n", patch.Path, patch.LineNumber)
 }
 
 func (patch *Patch) AppendData(data string) {

@@ -15,7 +15,7 @@ var resetCmd = &cobra.Command{
 	Use:     "reset",
 	Short:   "Reset openpilot repo",
 	Example: `omm reset`,
-	PreRun:  func(cmd *cobra.Command, args []string) { populate() },
+	PreRunE: func(cmd *cobra.Command, args []string) error { return loadParam() },
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return common.LogIfErr(installer.GetInstaller().Reset())
 	},

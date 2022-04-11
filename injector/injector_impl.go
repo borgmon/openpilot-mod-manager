@@ -8,7 +8,6 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/file"
 	ommerrors "github.com/borgmon/openpilot-mod-manager/omm-errors"
 	"github.com/borgmon/openpilot-mod-manager/patch"
-	"github.com/pkg/errors"
 )
 
 type InjectorImpl struct {
@@ -28,7 +27,7 @@ func GetInjector() Injector {
 }
 
 func (injector *InjectorImpl) Pending(p *patch.Patch) error {
-	fmt.Println("Pending patch: mod=" + p.Mod.Name + ", file=" + p.ToKey())
+	fmt.Printf("Pending patch: mod=%v, file=%v\n", p.Mod.Name, p.ToKey())
 	if _, ok := injector.Changes[p.ToKey()]; ok {
 		if p.Operand == patch.TypeOperandReplace {
 			return ommerrors.NewReplaceConflictError(p.Path, p.LineNumber)
@@ -75,7 +74,7 @@ func (injector *InjectorImpl) doInject(path string, appends []*patch.Patch, repl
 	appendMap := map[int]string{}
 	// replaceMap := map[int]string{}
 	for _, p := range appends {
-		fmt.Println("Inject patch: mod=" + p.Mod.Name + ", file=" + p.ToKey())
+		fmt.Printf("Inject patch: mod=%v, file=%v\n", p.Mod.Name, p.ToKey())
 		appendMap[p.LineNumber] = p.Data
 	}
 	// for _, patch := range replaces {
@@ -83,7 +82,7 @@ func (injector *InjectorImpl) doInject(path string, appends []*patch.Patch, repl
 	// }
 	err := file.GetFileHandler().AddLine(path, appendMap)
 	if err != nil {
-		return common.LogIfErr(errors.WithStack(err))
+		return common.LogIfErr(err)
 	}
 	// err = file.GetFileHandler().ReplaceLine(path, replaceMap)
 	// if err != nil {

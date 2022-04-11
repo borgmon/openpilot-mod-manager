@@ -39,7 +39,7 @@ func (handler *ManifestHandlerImpl) Init(path string) error {
 func GetManifestFromFile(path string) (*Manifest, error) {
 	data, err := file.GetFileHandler().LoadFile(filepath.Join(path, MANIFEST_FILE_NAME))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	man := &Manifest{}
 	err = yaml.Unmarshal(data, man)

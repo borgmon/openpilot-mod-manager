@@ -1,12 +1,15 @@
 package ommerrors
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type ReplaceConflictError struct{ Text string }
 
 func NewReplaceConflictError(file string, line int) *ReplaceConflictError {
 	return &ReplaceConflictError{
-		Text: "ReplaceConflictError: file=" + file + " , line=" + strconv.Itoa(line),
+		Text: fmt.Sprintf("ReplaceConflictError: file=%v , line=%v", file, strconv.Itoa(line)),
 	}
 }
 

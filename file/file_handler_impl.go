@@ -28,31 +28,36 @@ func GetFileHandler() FileHandler {
 }
 
 func (handler *FileHandlerImpl) SaveFile(name string, data []byte) error {
-	err := ioutil.WriteFile(name, data, 0666)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return errors.WithStack(ioutil.WriteFile(name, data, 0666))
 }
 
 func (handler *FileHandlerImpl) LoadFile(name string) ([]byte, error) {
-	return ioutil.ReadFile(name)
+	b, err := ioutil.ReadFile(name)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return b, nil
 }
 
 func (handler *FileHandlerImpl) RemoveFile(name string) error {
-	return os.Remove(name)
+	return errors.WithStack(os.Remove(name))
 }
 
 func (handler *FileHandlerImpl) AddLine(path string, m map[int]string) error {
-	data, err := ioutil.ReadFile(path)
+	data, err := handler.LoadFile(path)
 	if err != nil {
-		err := handler.NewFile(path)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		data, err = ioutil.ReadFile(path)
-		if err != nil {
-			return errors.WithStack(err)
+		e := errors.Unwrap(err)
+		if _, ok := e.(*os.PathError); ok {
+			err := handler.NewFile(path)
+			if err != nil {
+				return err
+			}
+			data, err = handler.LoadFile(path)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
 		}
 	}
 	text := string(data)
@@ -67,11 +72,7 @@ func (handler *FileHandlerImpl) AddLine(path string, m map[int]string) error {
 		}
 	}
 
-	err = handler.SaveFile(path, []byte(strings.Join(newLines, "\n")))
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return handler.SaveFile(path, []byte(strings.Join(newLines, "\n")))
 }
 
 func (handler *FileHandlerImpl) ReplaceLine(path string, m map[int]string) error {
@@ -97,47 +98,27 @@ func (handler *FileHandlerImpl) ListAllFilesRecursively(rootPath string) ([]stri
 }
 
 func (handler *FileHandlerImpl) CopyFolderRecursively(move string, to string) error {
-	err := execRunner("cp", "-R", move, to)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return errors.WithStack(execRunner("cp", "-R", move, to))
 }
 
 func (handler *FileHandlerImpl) NewFolder(path string) error {
-	err := execRunner("mkdir", "-p", path)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return errors.WithStack(execRunner("mkdir", "-p", path))
 }
 
 func (handler *FileHandlerImpl) NewBranch(path string) error {
-	err := execRunner("mkdir", "-p", path)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return errors.WithStack(execRunner("mkdir", "-p", path))
 }
 
 func (handler *FileHandlerImpl) NewFile(path string) error {
-	touch := exec.Command("touch", path)
-	err := touch.Run()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return errors.WithStack(execRunner("touch", path))
 }
 
 func execRunner(name string, arg ...string) error {
 	e := exec.Command(name, arg...)
 	b := new(strings.Builder)
 	e.Stdout = b
-	err := e.Run()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	common.LogIfVarbose(b.String())
+	return errors.WithStack(e.Run())
 }
 
 func (handler *FileHandlerImpl) NewFileRecursively(filePath string) error {
@@ -145,17 +126,13 @@ func (handler *FileHandlerImpl) NewFileRecursively(filePath string) error {
 
 	err := handler.NewFolder(path)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
-	err = handler.NewFile(filePath)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return handler.NewFile(filePath)
 }
 
 func (handler *FileHandlerImpl) RemoveFolder(path string) error {
-	return os.RemoveAll(path)
+	return errors.WithStack(os.RemoveAll(path))
 }
 
 func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]*patch.Patch, error) {
@@ -198,7 +175,7 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]*patch
 			buf = ""
 			start, err = parseLineNum(line)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return nil, err
 			}
 		} else {
 			buf += line
