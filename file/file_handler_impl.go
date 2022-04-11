@@ -43,7 +43,7 @@ func (handler *FileHandlerImpl) RemoveFile(name string) error {
 	return errors.WithStack(os.Remove(name))
 }
 
-func (handler *FileHandlerImpl) AddLine(path string, m map[int]string) error {
+func (handler *FileHandlerImpl) ModifyFile(path string, addMap map[int]string, deleteMap map[int]string) error {
 	data, err := handler.LoadFile(path)
 	if err != nil {
 		e := errors.Unwrap(err)
@@ -65,18 +65,18 @@ func (handler *FileHandlerImpl) AddLine(path string, m map[int]string) error {
 	newLines := lines
 	offset := 0
 	for i, _ := range lines {
-		if appendText, ok := m[i]; ok {
+		if appendText, ok := addMap[i]; ok {
 			l := []string{appendText}
 			newLines = append(newLines[:i+offset], append(l, newLines[(i+offset):]...)...)
 			offset++
 		}
+		if _, ok := deleteMap[i]; ok {
+			newLines = append(newLines[:i-1+offset], newLines[(i+offset):]...)
+			offset--
+		}
 	}
 
 	return handler.SaveFile(path, []byte(strings.Join(newLines, "\n")))
-}
-
-func (handler *FileHandlerImpl) ReplaceLine(path string, m map[int]string) error {
-	return errors.New("<<< not implement yet")
 }
 
 func (handler *FileHandlerImpl) ListAllFilesRecursively(rootPath string) ([]string, error) {
@@ -152,13 +152,17 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]*patch
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				result = append(result, &patch.Patch{
-					Path:       opPath,
-					LineNumber: start,
-					Data:       buf,
-					Operand:    operand,
-				})
-				return result, nil
+				if operand != "" {
+					result = append(result, &patch.Patch{
+						Path:       opPath,
+						LineNumber: start,
+						Data:       removeTrailingNewLine(buf),
+						Operand:    operand,
+					})
+					return result, nil
+				} else {
+					return result, nil
+				}
 			}
 			return nil, errors.WithStack(err)
 		}
@@ -167,7 +171,7 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]*patch
 				result = append(result, &patch.Patch{
 					Path:       opPath,
 					LineNumber: start,
-					Data:       buf,
+					Data:       removeTrailingNewLine(buf),
 					Operand:    operand,
 				})
 			}
@@ -185,6 +189,14 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]*patch
 
 }
 
+func removeTrailingNewLine(str string) string {
+	if str[len(str)-1] == '\n' {
+		return str[:len(str)-1]
+	} else {
+		return str
+	}
+}
+
 func parseLineNum(line string) (int, error) {
 	parts := strings.Split(line, "#")
 	last := parts[len(parts)-1]
@@ -200,8 +212,8 @@ func getOperands(line string) string {
 	if strings.Contains(line, patch.TypeOperandAppend) {
 		return patch.TypeOperandAppend
 	}
-	if strings.Contains(line, patch.TypeOperandReplace) {
-		return patch.TypeOperandReplace
+	if strings.Contains(line, patch.TypeOperandDelete) {
+		return patch.TypeOperandDelete
 	}
 	return ""
 }

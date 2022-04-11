@@ -18,8 +18,8 @@ type Patch struct {
 }
 
 const (
-	TypeOperandReplace = "<<<"
-	TypeOperandAppend  = ">>>"
+	TypeOperandDelete = "---"
+	TypeOperandAppend = ">>>"
 )
 
 // key format: relative_path/filename.ext#line_num
@@ -37,7 +37,7 @@ func KeyToPatch(key string, data string) (*Patch, error) {
 }
 
 func (patch *Patch) ToKey() string {
-	return fmt.Sprintf("%v#%v\n", patch.Path, patch.LineNumber)
+	return fmt.Sprintf("%v#%v", patch.Path, patch.LineNumber)
 }
 
 func (patch *Patch) AppendData(data string) {

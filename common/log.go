@@ -15,13 +15,13 @@ func PanicIfErr(err error) error {
 
 func LogIfErr(err error) error {
 	if err != nil && param.ConfigStore.Verbose {
-		fmt.Printf("%+v\n", err)
+		fmt.Printf("%+v", err)
 	}
 	return err
 }
 
 func LogIfVarbose(str string) {
 	if param.ConfigStore.Verbose {
-		fmt.Printf("%+v\n", str)
+		fmt.Printf("%+v", str)
 	}
 }

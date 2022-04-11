@@ -73,7 +73,7 @@ func load() error {
 	if err != nil {
 		e := errors.Unwrap(err)
 		if _, ok := e.(*os.PathError); ok {
-			return errors.New(fmt.Sprintf("No %v found in the directory %v.\nPlease init first:\nomm init\n", config.CONFIG_FILE_NAME, OPPath))
+			return errors.New(fmt.Sprintf("No %v found in the directory %v.\nPlease init first:\nomm init", config.CONFIG_FILE_NAME, OPPath))
 		}
 		return err
 	}

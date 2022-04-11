@@ -94,7 +94,7 @@ func (installer *InstallerImpl) RemoveAllOMMBranches() error {
 }
 
 func (installer *InstallerImpl) Remove(name string) error {
-	fmt.Printf("Removing: %v\n", name)
+	fmt.Printf("Removing: %v", name)
 	err := config.GetConfigHandler().RemoveMod(name)
 	if err != nil {
 		return err
@@ -134,7 +134,7 @@ func (installer *InstallerImpl) installFromFile(path string, force bool) error {
 		fmt.Println("This Mod is already exist")
 		return nil
 	}
-	fmt.Printf("Installing: %v@%v\n", man.Name, man.Version)
+	fmt.Printf("Installing: %v@%v", man.Name, man.Version)
 	err = config.GetConfigHandler().AddMod(&mod.Mod{
 		Name:    man.Name,
 		Version: man.Version,
@@ -181,7 +181,7 @@ func (installer *InstallerImpl) installFromUrl(path string, force bool) error {
 	} else {
 		version = specificVersion
 	}
-	fmt.Printf("Installing: %v@%v\n", name, version)
+	fmt.Printf("Installing: %v@%v", name, version)
 	err = config.GetConfigHandler().AddMod(&mod.Mod{
 		Name:    name,
 		Version: version,
