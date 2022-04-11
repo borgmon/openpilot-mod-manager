@@ -70,9 +70,27 @@ func (handler *FileHandlerImpl) ModifyFile(path string, addMap map[int]string, d
 			newLines = append(newLines[:i+offset], append(l, newLines[(i+offset):]...)...)
 			offset++
 		}
-		if _, ok := deleteMap[i]; ok {
-			newLines = append(newLines[:i-1+offset], newLines[(i+offset):]...)
-			offset--
+		if replaceText, ok := deleteMap[i]; ok {
+			l := []string{replaceText}
+			if replaceText != "" {
+				newLines = append(newLines[:i+offset-1], append(l, newLines[(i+offset):]...)...)
+			} else {
+				newLines = append(newLines[:i+offset-1], newLines[(i+offset):]...)
+				offset--
+			}
+
+		}
+	}
+	if appendText, ok := addMap[len(lines)]; ok {
+		l := []string{appendText}
+		newLines = append(newLines, l...)
+	}
+	if replaceText, ok := deleteMap[len(lines)]; ok {
+		l := []string{replaceText}
+		if replaceText != "" {
+			newLines = append(newLines[:len(newLines)-1], l...)
+		} else {
+			newLines = newLines[:len(newLines)-1]
 		}
 	}
 
@@ -167,7 +185,7 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]*patch
 			return nil, errors.WithStack(err)
 		}
 		if op := getOperands(line); op != "" {
-			if buf != "" {
+			if buf != "" || operand == patch.TypeOperandDelete {
 				result = append(result, &patch.Patch{
 					Path:       opPath,
 					LineNumber: start,
@@ -190,7 +208,7 @@ func (handler *FileHandlerImpl) ParsePatch(path string, opPath string) ([]*patch
 }
 
 func removeTrailingNewLine(str string) string {
-	if str[len(str)-1] == '\n' {
+	if str != "" && str[len(str)-1] == '\n' {
 		return str[:len(str)-1]
 	} else {
 		return str
@@ -209,8 +227,8 @@ func parseLineNum(line string) (int, error) {
 }
 
 func getOperands(line string) string {
-	if strings.Contains(line, patch.TypeOperandAppend) {
-		return patch.TypeOperandAppend
+	if strings.Contains(line, patch.TypeOperandAdd) {
+		return patch.TypeOperandAdd
 	}
 	if strings.Contains(line, patch.TypeOperandDelete) {
 		return patch.TypeOperandDelete

@@ -19,7 +19,7 @@ type Patch struct {
 
 const (
 	TypeOperandDelete = "---"
-	TypeOperandAppend = ">>>"
+	TypeOperandAdd    = ">>>"
 )
 
 // key format: relative_path/filename.ext#line_num
@@ -41,5 +41,9 @@ func (patch *Patch) ToKey() string {
 }
 
 func (patch *Patch) AppendData(data string) {
-	patch.Data += "\n" + data
+	if patch.Data != "" {
+		patch.Data += "\n" + data
+	} else {
+		patch.Data += data
+	}
 }

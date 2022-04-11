@@ -90,7 +90,7 @@ func (handler *GitHandlerImpl) CheckoutBranch(gitPath string, name string) error
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	out, err := git.Checkout(checkout.Branch(name), git.Debug)
+	out, err := git.Checkout(checkout.Branch(name), checkout.Force, git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
 		return err

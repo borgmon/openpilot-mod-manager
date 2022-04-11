@@ -26,13 +26,22 @@ func GetInjector() Injector {
 }
 
 func (injector *InjectorImpl) Pending(p *patch.Patch) error {
-	fmt.Printf("Pending patch: mod=%v, file=%v\n", p.Mod.Name, p.ToKey())
+	fmt.Printf("Pending patch: mod=%v\tfile=%v\tmode=%v\n", p.Mod.Name, p.ToKey(), p.Operand)
 	if _, ok := injector.Changes[p.ToKey()]; ok {
-		if p.Operand == patch.TypeOperandDelete {
-			return nil
+		switch injector.Changes[p.ToKey()].Operand {
+		case patch.TypeOperandDelete:
+			if p.Operand == patch.TypeOperandDelete {
+				return nil
+			} else {
+				injector.Changes[p.ToKey()].AppendData(p.Data)
+			}
+		case patch.TypeOperandAdd:
+			if p.Operand == patch.TypeOperandDelete {
+				injector.Changes[p.ToKey()].Operand = patch.TypeOperandDelete
+			} else {
+				injector.Changes[p.ToKey()].AppendData(p.Data)
+			}
 		}
-
-		injector.Changes[p.ToKey()].AppendData(p.Data)
 	} else {
 		injector.Changes[p.ToKey()] = p
 	}
@@ -63,12 +72,11 @@ func (injector *InjectorImpl) doInject(path string, patchMap []*patch.Patch) err
 	appendMap := map[int]string{}
 	deleteMap := map[int]string{}
 	for _, p := range patchMap {
+		fmt.Printf("Inject patch: mod=%v\tfile=%v\tmode=%v\n", p.Mod.Name, p.ToKey(), p.Operand)
 		switch p.Operand {
-		case patch.TypeOperandAppend:
-			fmt.Printf("Inject appending patch: mod=%v, file=%v\n", p.Mod.Name, p.ToKey())
+		case patch.TypeOperandAdd:
 			appendMap[p.LineNumber] = p.Data
 		case patch.TypeOperandDelete:
-			fmt.Printf("Inject deletion patch: mod=%v, file=%v\n", p.Mod.Name, p.ToKey())
 			deleteMap[p.LineNumber] = p.Data
 		}
 	}
