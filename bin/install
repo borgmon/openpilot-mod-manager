@@ -1,0 +1,7 @@
+#!/bin/sh
+
+download_link="https://github.com/borgmon/openpilot-mod-manager/raw/main/bin/omm"
+curl -fsSL ${download_link} -o /usr/local/bin/omm
+chmod +x /usr/local/bin/omm
+echo "Download complete! You can now run Openpilot Mod Manager by run omm"
+exit 0

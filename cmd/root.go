@@ -24,17 +24,17 @@ var versionFlag = false
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:          "omm",
-	Short:        "Openpilot Mod Manager(OMM)",
-	Long:         `Openpilot Mod Manager is a toolkit for using and developing mods.`,
-	SilenceUsage: true,
+	Use:   "omm",
+	Short: "Openpilot Mod Manager(OMM)",
+	Long:  `Openpilot Mod Manager is a toolkit for using and developing mods.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	PreRunE: func(cmd *cobra.Command, args []string) error { return loadParam() },
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if versionFlag {
 			fmt.Println(version.OMMVersion)
 		}
+		return cmd.Help()
 	},
 }
 

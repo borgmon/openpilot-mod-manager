@@ -25,7 +25,7 @@ func (handler *ManifestHandlerImpl) Init(path string) error {
 		Name:        "my-mod",
 		DisplayName: "my mod",
 		RepoUrl:     "https://github.com/myname/my-mod",
-		Version:     "v0.8.13-1",
+		Version:     "v0.8.13-1.0",
 		Description: "This is my mod",
 		Publisher:   "my name",
 	}
