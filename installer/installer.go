@@ -6,4 +6,5 @@ type Installer interface {
 	Install(path string, force bool) error
 	Remove(name string) error
 	List() error
+	Init(OPPath string) error
 }

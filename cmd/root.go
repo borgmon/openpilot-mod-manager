@@ -17,6 +17,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const OMMVersion = "v0.1"
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:          "omm",
@@ -59,7 +61,15 @@ func loadParam() error {
 		OPPath,
 		Verbose,
 	)
-	_, err := config.LoadConfigHandler()
+	return file.GetFileHandler().NewFolder(OMMPath)
+}
+
+func load() error {
+	err := loadParam()
+	if err != nil {
+		return err
+	}
+	_, err = config.LoadConfigHandler()
 	if err != nil {
 		e := errors.Unwrap(err)
 		if _, ok := e.(*os.PathError); ok {
@@ -68,5 +78,5 @@ func loadParam() error {
 		return err
 	}
 
-	return file.GetFileHandler().NewFolder(OMMPath)
+	return nil
 }

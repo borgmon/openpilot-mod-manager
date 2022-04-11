@@ -2,6 +2,7 @@ package installer
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -195,6 +196,26 @@ func (installer *InstallerImpl) installFromUrl(path string, force bool) error {
 func (installer *InstallerImpl) List() error {
 	_, err := fmt.Println(config.GetConfigHandler().BuildModList())
 	return err
+}
+
+func (installer *InstallerImpl) Init(OPPath string) error {
+	_, err := file.GetFileHandler().LoadFile(filepath.Join(OPPath, config.CONFIG_FILE_NAME))
+	if err != nil {
+		e := errors.Unwrap(err)
+		if _, ok := e.(*os.PathError); ok {
+			fmt.Println("Initing...")
+			version, err := git.GetGitHandler().GetBranchName(OPPath)
+			if err != nil {
+				return err
+			}
+			c := config.NewConfigHandler(version)
+			return c.SaveConfig()
+		} else {
+			return err
+		}
+	}
+	fmt.Println("You already have a config file.")
+	return nil
 }
 
 func getLatestModVersion(rootPath string) (string, error) {

@@ -22,13 +22,13 @@ omm mod new`,
 	SilenceUsage: true,
 }
 
-var initCmd = &cobra.Command{
+var modInitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Generate a manifest.yml",
 	Long: `Example:
 omm mod init`,
 	Example: "example",
-	PreRunE: func(cmd *cobra.Command, args []string) error { return loadParam() },
+	PreRunE: func(cmd *cobra.Command, args []string) error { return load() },
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return common.LogIfErr(manifest.GetManifestHandler().Init(param.PathStore.OPPath))
 	},
@@ -41,7 +41,7 @@ var newCmd = &cobra.Command{
 	Long: `Example:
 omm mod new selfdrive/common/params.cc`,
 	Example: "example",
-	PreRunE: func(cmd *cobra.Command, args []string) error { return loadParam() },
+	PreRunE: func(cmd *cobra.Command, args []string) error { return load() },
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			return errors.New("Invalid Args")
@@ -52,7 +52,7 @@ omm mod new selfdrive/common/params.cc`,
 }
 
 func init() {
-	modCmd.AddCommand(initCmd)
+	modCmd.AddCommand(modInitCmd)
 	modCmd.AddCommand(newCmd)
 	rootCmd.AddCommand(modCmd)
 

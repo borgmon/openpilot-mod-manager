@@ -15,7 +15,7 @@ var listCmd = &cobra.Command{
 	Use:     "list",
 	Short:   "List installed mods",
 	Example: `omm list`,
-	PreRunE: func(cmd *cobra.Command, args []string) error { return loadParam() },
+	PreRunE: func(cmd *cobra.Command, args []string) error { return load() },
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return common.LogIfErr(installer.GetInstaller().List())
 	},

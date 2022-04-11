@@ -11,6 +11,7 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/mod"
 	"github.com/borgmon/openpilot-mod-manager/param"
+	"github.com/borgmon/openpilot-mod-manager/version"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -23,8 +24,9 @@ var configHandlerInstance ConfigHandler
 
 func NewConfigHandler(OPVersion string) ConfigHandler {
 	c := &ConfigHandlerImpl{Config: &Config{
-		OPVersion: OPVersion,
-		Mods:      []*mod.Mod{},
+		OPVersion:  OPVersion,
+		OMMVersion: version.OMMVersion,
+		Mods:       []*mod.Mod{},
 	}}
 	configHandlerInstance = c
 	return c
