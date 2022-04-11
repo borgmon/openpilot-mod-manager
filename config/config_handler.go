@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/mod"
 )
 
@@ -15,8 +14,6 @@ type ConfigHandler interface {
 	FindMod(name string) (*mod.Mod, error)
 	SortMod() error
 	ApplyMods() error
-	GetManifest(name string) (*manifest.Manifest, error)
-	GetManifests() ([]*manifest.Manifest, error)
 	GetConfig() *Config
 	BuildModList() string
 }

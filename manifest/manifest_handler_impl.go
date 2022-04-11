@@ -35,3 +35,16 @@ func (handler *ManifestHandlerImpl) Init(path string) error {
 	}
 	return file.GetFileHandler().SaveFile(filepath.Join(path, MANIFEST_FILE_NAME), data)
 }
+
+func GetManifestFromFile(path string) (*Manifest, error) {
+	data, err := file.GetFileHandler().LoadFile(filepath.Join(path, MANIFEST_FILE_NAME))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	man := &Manifest{}
+	err = yaml.Unmarshal(data, man)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return man, nil
+}

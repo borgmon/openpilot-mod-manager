@@ -12,6 +12,7 @@ import (
 	"github.com/ldez/go-git-cmd-wrapper/clone"
 	"github.com/ldez/go-git-cmd-wrapper/commit"
 	"github.com/ldez/go-git-cmd-wrapper/git"
+	"github.com/ldez/go-git-cmd-wrapper/pull"
 	"github.com/ldez/go-git-cmd-wrapper/reset"
 	"github.com/ldez/go-git-cmd-wrapper/status"
 	"github.com/pkg/errors"
@@ -142,15 +143,30 @@ func (handler *GitHandlerImpl) ResetBranch(gitPath string) error {
 	return nil
 }
 
-func (handler *GitHandlerImpl) ListBranch(gitPath string) (string, error) {
+func (handler *GitHandlerImpl) ListBranch(gitPath string) ([]string, error) {
 	err := os.Chdir(gitPath)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 	out, err := git.Branch(branch.List, git.Debug)
 	common.LogIfVarbose(out)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
-	return out, nil
+
+	return strings.Split(out, "\n"), nil
+}
+
+func (handler *GitHandlerImpl) Pull(gitPath string) error {
+	err := os.Chdir(gitPath)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	out, err := git.Pull(pull.All, git.Debug)
+	common.LogIfVarbose(out)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }

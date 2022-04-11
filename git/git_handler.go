@@ -10,5 +10,6 @@ type GitHandler interface {
 	CommitBranch(gitPath string, name string) error
 	AddBranch(gitPath string) error
 	ResetBranch(gitPath string) error
-	ListBranch(gitPath string) (string, error)
+	ListBranch(gitPath string) ([]string, error)
+	Pull(gitPath string) error
 }

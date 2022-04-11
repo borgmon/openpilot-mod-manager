@@ -1,6 +1,7 @@
 package injector
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/borgmon/openpilot-mod-manager/common"
@@ -27,7 +28,7 @@ func GetInjector() Injector {
 }
 
 func (injector *InjectorImpl) Pending(p *patch.Patch) error {
-	common.LogIfVarbose("Pending patch: mod=" + p.Mod.Name + ", file=" + p.ToKey())
+	fmt.Println("Pending patch: mod=" + p.Mod.Name + ", file=" + p.ToKey())
 	if _, ok := injector.Changes[p.ToKey()]; ok {
 		if p.Operand == patch.TypeOperandReplace {
 			return ommerrors.NewReplaceConflictError(p.Path, p.LineNumber)
@@ -74,7 +75,7 @@ func (injector *InjectorImpl) doInject(path string, appends []*patch.Patch, repl
 	appendMap := map[int]string{}
 	// replaceMap := map[int]string{}
 	for _, p := range appends {
-		common.LogIfVarbose("Inject patch: mod=" + p.Mod.Name + ", file=" + p.ToKey())
+		fmt.Println("Inject patch: mod=" + p.Mod.Name + ", file=" + p.ToKey())
 		appendMap[p.LineNumber] = p.Data
 	}
 	// for _, patch := range replaces {

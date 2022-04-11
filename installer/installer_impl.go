@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/borgmon/openpilot-mod-manager/cache"
 	"github.com/borgmon/openpilot-mod-manager/common"
 	"github.com/borgmon/openpilot-mod-manager/config"
 	"github.com/borgmon/openpilot-mod-manager/file"
@@ -12,8 +13,8 @@ import (
 	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/mod"
 	"github.com/borgmon/openpilot-mod-manager/param"
-	"github.com/borgmon/openpilot-mod-manager/source"
 	"github.com/pkg/errors"
+	"golang.org/x/mod/semver"
 )
 
 type InstallerImpl struct{}
@@ -29,7 +30,7 @@ func GetInstaller() Installer {
 }
 
 func (installer *InstallerImpl) Apply() error {
-
+	fmt.Println("Applying...")
 	err := git.GetGitHandler().CheckoutBranch(param.PathStore.OPPath, config.GetConfigHandler().GetConfig().OPVersion)
 	if err != nil {
 		return errors.WithStack(err)
@@ -54,6 +55,7 @@ func (installer *InstallerImpl) Apply() error {
 }
 
 func (installer *InstallerImpl) Reset() error {
+	fmt.Println("Reseting...")
 	err := git.GetGitHandler().CheckoutBranch(param.PathStore.OPPath, config.GetConfigHandler().GetConfig().OPVersion)
 	if err != nil {
 		return errors.WithStack(err)
@@ -74,11 +76,10 @@ func (installer *InstallerImpl) Reset() error {
 }
 
 func (installer *InstallerImpl) RemoveAllOMMBranches() error {
-	str, err := git.GetGitHandler().ListBranch(param.PathStore.OPPath)
+	branches, err := git.GetGitHandler().ListBranch(param.PathStore.OPPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	branches := strings.Split(str, "\n")
 	for _, b := range branches {
 		if strings.Contains(b, "omm-") {
 			err = git.GetGitHandler().RemoveBranch(param.PathStore.OPPath, b[2:])
@@ -91,23 +92,8 @@ func (installer *InstallerImpl) RemoveAllOMMBranches() error {
 	return nil
 }
 
-func (installer *InstallerImpl) DownloadMod(s source.Source, force bool) (*manifest.Manifest, error) {
-	if force {
-		return s.DownloadToCache()
-	}
-	name, err := s.GetName()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	if mod, _ := config.GetConfigHandler().FindMod(name); mod != nil {
-		fmt.Println("This Mod is already exist")
-		return nil, nil
-	} else {
-		return s.DownloadToCache()
-	}
-}
-
 func (installer *InstallerImpl) Remove(name string) error {
+	fmt.Println("Removing: " + name)
 	err := config.GetConfigHandler().RemoveMod(name)
 	if err != nil {
 		return errors.WithStack(err)
@@ -124,45 +110,108 @@ func (installer *InstallerImpl) Remove(name string) error {
 }
 
 func (installer *InstallerImpl) Install(path string, force bool) error {
-	var s source.Source
 	if common.IsUrl(path) {
-		s = &source.GitSource{
-			RemoteUrl:     path,
-			ConfigHandler: config.GetConfigHandler(),
+		err := installer.installFromUrl(path, force)
+		if err != nil {
+			return errors.WithStack(err)
 		}
-
 	} else {
-		s = &source.LocalSource{
-			LocalPath:     path,
-			ConfigHandler: config.GetConfigHandler(),
+		err := installer.installFromFile(path, force)
+		if err != nil {
+			return errors.WithStack(err)
 		}
 	}
+	return installer.Apply()
+}
 
-	man, err := installer.DownloadMod(s, force)
+func (installer *InstallerImpl) installFromFile(path string, force bool) error {
+	man, err := manifest.GetManifestFromFile(path)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if man == nil {
+	if mod, _ := config.GetConfigHandler().FindMod(man.Name); mod != nil && !force {
+		fmt.Println("This Mod is already exist")
 		return nil
 	}
-
+	fmt.Println("Installing: " + man.Name + "@" + man.Version)
 	err = config.GetConfigHandler().AddMod(&mod.Mod{
 		Name:    man.Name,
 		Version: man.Version,
+		Url:     path,
 	})
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	return nil
+}
+func (installer *InstallerImpl) installFromUrl(path string, force bool) error {
+	specificVersion := ""
+	if parts := strings.Split(path, "@"); len(parts) != 0 {
+		specificVersion = parts[len(parts)-1]
+		path = parts[0]
+	}
 
-	err = installer.Apply()
+	name, err := common.GetNameFromGithub(path)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
+	if mod, _ := config.GetConfigHandler().FindMod(name); mod != nil {
+		if !force {
+			fmt.Println("This Mod is already exist")
+			return nil
+		} else {
+			err = git.GetGitHandler().Pull(filepath.Join(param.PathStore.OMMPath, name))
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+	}
+	err = cache.GetCacheHandler().Download(path)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	version := ""
+	if specificVersion == "" {
+		version, err = getLatestModVersion(path)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		version = specificVersion
+	}
+	fmt.Println("Installing: " + name + "@" + version)
+	err = config.GetConfigHandler().AddMod(&mod.Mod{
+		Name:    name,
+		Version: version,
+		Url:     path,
+	})
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	return nil
 }
 
 func (installer *InstallerImpl) List() error {
 	_, err := fmt.Println(config.GetConfigHandler().BuildModList())
 	return err
+}
+
+func getLatestModVersion(rootPath string) (string, error) {
+	branches, err := git.GetGitHandler().ListBranch(rootPath)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	latestBranch := "0.0.0"
+	for _, b := range branches {
+		if strings.Contains(b, config.GetConfigHandler().GetConfig().OPVersion) {
+			if semver.Compare(b, latestBranch) == 1 {
+				latestBranch = b
+			}
+		}
+	}
+	if latestBranch == "0.0.0" {
+		return "", errors.New("Cannot find compatable version of this mod")
+	}
+	return latestBranch, nil
 }

@@ -4,9 +4,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/borgmon/openpilot-mod-manager/common"
 	"github.com/borgmon/openpilot-mod-manager/file"
+	"github.com/borgmon/openpilot-mod-manager/git"
 	"github.com/borgmon/openpilot-mod-manager/injector"
-	"github.com/borgmon/openpilot-mod-manager/manifest"
 	"github.com/borgmon/openpilot-mod-manager/mod"
 	"github.com/borgmon/openpilot-mod-manager/param"
 	"github.com/pkg/errors"
@@ -45,7 +46,7 @@ func GetConfigHandler() ConfigHandler {
 	return configHandlerInstance
 }
 
-func (config ConfigHandlerImpl) CreateConfig() (*Config, error) {
+func (config *ConfigHandlerImpl) CreateConfig() (*Config, error) {
 	c := NewConfigHandler(config.Config.OPVersion)
 	err := c.SaveConfig()
 	if err != nil {
@@ -54,11 +55,11 @@ func (config ConfigHandlerImpl) CreateConfig() (*Config, error) {
 	return c.GetConfig(), nil
 }
 
-func (config ConfigHandlerImpl) RemoveConfig() error {
+func (config *ConfigHandlerImpl) RemoveConfig() error {
 	return file.GetFileHandler().RemoveFile(param.PathStore.ConfigPath)
 }
 
-func (config ConfigHandlerImpl) SaveConfig() error {
+func (config *ConfigHandlerImpl) SaveConfig() error {
 	bytes, err := yaml.Marshal(config.Config)
 	if err != nil {
 		return errors.WithStack(err)
@@ -70,7 +71,7 @@ func (config ConfigHandlerImpl) SaveConfig() error {
 	return nil
 }
 
-func (config ConfigHandlerImpl) LoadConfig() (*Config, error) {
+func (config *ConfigHandlerImpl) LoadConfig() (*Config, error) {
 	bytes, err := file.GetFileHandler().LoadFile(param.PathStore.ConfigPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -82,7 +83,7 @@ func (config ConfigHandlerImpl) LoadConfig() (*Config, error) {
 	return config.Config, nil
 }
 
-func (config ConfigHandlerImpl) AddMod(mod *mod.Mod) error {
+func (config *ConfigHandlerImpl) AddMod(mod *mod.Mod) error {
 	if r, _ := config.FindMod(mod.Name); r != nil {
 		return nil
 	}
@@ -94,7 +95,7 @@ func (config ConfigHandlerImpl) AddMod(mod *mod.Mod) error {
 	return nil
 }
 
-func (config ConfigHandlerImpl) RemoveMod(name string) error {
+func (config *ConfigHandlerImpl) RemoveMod(name string) error {
 	mods := []*mod.Mod{}
 
 	for _, mod := range config.Config.Mods {
@@ -111,7 +112,7 @@ func (config ConfigHandlerImpl) RemoveMod(name string) error {
 	return nil
 }
 
-func (config ConfigHandlerImpl) FindMod(name string) (*mod.Mod, error) {
+func (config *ConfigHandlerImpl) FindMod(name string) (*mod.Mod, error) {
 	for _, mod := range config.Config.Mods {
 		if mod.Name == name {
 			return mod, nil
@@ -125,21 +126,20 @@ func (config ConfigHandlerImpl) SortMod() error {
 	return errors.New("SortMod not implemented")
 }
 
-func (config ConfigHandlerImpl) GetManifests() ([]*manifest.Manifest, error) {
-	result := []*manifest.Manifest{}
+func (config *ConfigHandlerImpl) ApplyMods() error {
 	for _, mod := range config.Config.Mods {
-		man, err := config.GetManifest(mod.Name)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		result = append(result, man)
-	}
-	return result, nil
-}
+		rootPath := ""
+		if common.IsUrl(mod.Url) {
+			rootPath = filepath.Join(param.PathStore.OMMPath, mod.Name)
+			err := git.GetGitHandler().CheckoutBranch(rootPath, mod.Version)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 
-func (config ConfigHandlerImpl) ApplyMods() error {
-	for _, mod := range config.Config.Mods {
-		rootPath := filepath.Join(param.PathStore.OMMPath, mod.Name)
+		} else {
+			rootPath = mod.Url
+		}
+
 		paths, err := file.GetFileHandler().ListAllFilesRecursively(rootPath)
 		if err != nil {
 			return errors.WithStack(err)
@@ -163,49 +163,39 @@ func (config ConfigHandlerImpl) ApplyMods() error {
 }
 
 func filterFiles(paths []string) []string {
-	blackList := []string{"manifest.yml", "omm.yml"}
+	blackList := []string{"manifest.yml", "omm.yml", ".git"}
 	results := []string{}
 	for _, path := range paths {
-		if !eleInList(path, blackList) {
+		if !pathInBlackList(path, blackList) {
 			results = append(results, path)
 		}
 	}
 	return results
 }
 
-func eleInList(path string, blackList []string) bool {
-	for _, black := range blackList {
-		if strings.Contains(path, black) {
+func pathInBlackList(path string, blackList []string) bool {
+	for _, part := range strings.Split(path, "/") {
+		if partsInBlackList(part, blackList) {
 			return true
 		}
 	}
 	return false
 }
 
-func (config ConfigHandlerImpl) GetManifest(name string) (*manifest.Manifest, error) {
-	mod, err := config.FindMod(name)
-	if err != nil {
-		return nil, errors.WithStack(err)
+func partsInBlackList(path string, blackList []string) bool {
+	for _, black := range blackList {
+		if black == path {
+			return true
+		}
 	}
-	path := filepath.Join(param.PathStore.OMMPath, mod.Name, manifest.MANIFEST_FILE_NAME)
-	data, err := file.GetFileHandler().LoadFile(path)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	man := &manifest.Manifest{}
-	err = yaml.Unmarshal(data, man)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return man, nil
-
+	return false
 }
 
-func (config ConfigHandlerImpl) GetConfig() *Config {
+func (config *ConfigHandlerImpl) GetConfig() *Config {
 	return config.Config
 }
 
-func (config ConfigHandlerImpl) BuildModList() string {
+func (config *ConfigHandlerImpl) BuildModList() string {
 	result := []string{}
 	for _, m := range config.Config.Mods {
 		result = append(result, m.Name+":"+m.Version)
